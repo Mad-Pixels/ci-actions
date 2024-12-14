@@ -40,15 +40,25 @@ class TerraformClient:
     async def _run_command(self, *args: str) -> tuple[bool, str, Optional[str]]:
         """Run Terraform command and return result"""
         cmd = ["terraform", *args]
-        result = await self._executer.execute(
-            cmd=cmd,
-            cwd=self.working_dir
-        )
-        return (
-            result.status == 0,
-            result.stdout,
-            result.stderr if result.status != 0 else None
-        )
+        logging.info(f"Executing command: {' '.join(cmd)}")  # Логируем команду
+        try:
+            result = await self._executer.execute(
+                cmd=cmd,
+                cwd=self.working_dir
+            )
+            logging.info(f"Command exit code: {result.status}")
+            logging.info(f"Command stdout: {result.stdout}")
+            if result.stderr:
+                logging.warning(f"Command stderr: {result.stderr}")
+            
+            return (
+                result.status == 0,
+                result.stdout,
+                result.stderr if result.status != 0 else None
+            )
+        except Exception as e:
+            logging.error(f"Error executing command: {e}")
+            raise
 
     async def plan(
         self, 
@@ -57,16 +67,12 @@ class TerraformClient:
     ) -> TerraformPlanResult:
         """
         Run terraform plan
-        
+    
         Args:
             output_file: Optional file to save plan
-            detailed_exitcode: Use detailed exit codes (0 - no changes, 1 - error, 2 - changes present)
+            detailed_exitcode: Use detailed exit codes
         """
         args = ["plan", "-no-color"]
-        if self._variables:
-            for var_name, var_def in self._variables.items():
-                var_value = json.dumps(var_def["value"])
-                args.extend(["-var", f"{var_name}={var_value}"])
         if output_file:
             args.extend(["-out", str(output_file)])
         if detailed_exitcode:
@@ -77,6 +83,7 @@ class TerraformClient:
         if detailed_exitcode:
             has_changes = not success
             success = error is None
+
         result: TerraformPlanResult = {
             "success": success,
             "changes": has_changes or "No changes." not in stdout,

@@ -1,7 +1,11 @@
 from typing import Optional, Dict, Sequence
 from pathlib import Path
+
 import asyncio
+import logging
 import os
+
+logging = logging.getLogger(__name__)
 
 from .base import BaseExecuter, ExecutionResult
 
@@ -14,19 +18,31 @@ class SubprocessExecuter(BaseExecuter):
             env: Optional[Dict[str, str]] = None, 
             cwd: Optional[Path] = None
     ) -> ExecutionResult:
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=env,
-            cwd=cwd
-        )
-        stdout, stderr = await process.communicate()
-        return ExecutionResult(
-            status=process.returncode,
-            stdout=stdout.decode(),
-            stderr=stderr.decode()
-        )
+        logging.info(f"Creating subprocess for command: {' '.join(cmd)}")
+        logging.info(f"Working directory: {cwd}")
+        logging.info(f"Environment variables: {list(env.keys()) if env else None}")
+        
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=env,
+                cwd=cwd
+            )
+            logging.info(f"Process created with pid: {process.pid}")
+            
+            stdout, stderr = await process.communicate()
+            logging.info(f"Process completed with return code: {process.returncode}")
+            
+            return ExecutionResult(
+                status=process.returncode,
+                stdout=stdout.decode(),
+                stderr=stderr.decode()
+            )
+        except Exception as e:
+            logging.error(f"Error in subprocess execution: {e}")
+            raise
     
 
 class IsolateExecuter(SubprocessExecuter):
