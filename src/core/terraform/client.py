@@ -33,9 +33,9 @@ class TerraformClient:
             executer: Optional custom command executer
             variables: Optional Terraform variables
         """
+        self._variables = variables or {}
         self.working_dir = Path(working_dir)
         self._executer = executer or IsolateExecuter()
-        self._variables = variables or {}
 
     async def _run_command(self, *args: str) -> tuple[bool, str, Optional[str]]:
         """Run Terraform command and return result"""
