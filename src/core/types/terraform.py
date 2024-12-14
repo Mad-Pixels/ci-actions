@@ -30,6 +30,19 @@ class TerraformApplyResult(TypedDict):
 class TerraformFormatResult(TypedDict):
     """Result of terraform fmt operation"""
     success: bool
-    changed: bool  # True if files were reformatted
+    changed: bool     # True if files were reformatted
     files: list[str]  # List of changed files
+    error: NotRequired[str]
+
+class TerraformInitResult(TypedDict):
+    """Result of terraform init operation"""
+    success: bool
+    output: str
+    error: NotRequired[str]
+
+class TerraformWorkspaceResult(TypedDict):
+    """Result of terraform workspace operations"""
+    success: bool
+    name: str  # Current workspace name
+    output: str
     error: NotRequired[str]
