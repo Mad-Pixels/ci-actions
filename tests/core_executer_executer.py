@@ -2,9 +2,10 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.core.executer.executer import SubprocessExecuter, IsolateExecuter
+from src.core.executer.executer import SubprocessExecuter 
 from src.core.executer.exceptions import SubprocessError
 from src.core.executer.base import ExecutionResult
+from src.core.executer.masker import OutputMasker
 
 pytestmark = pytest.mark.asyncio
 
@@ -82,3 +83,44 @@ async def test_isolate_executer_override_env_called(isolate_executer, mocker):
 
         mock_override_env.assert_called_once_with({"KEY": "VALUE"})
         mock_execute.assert_awaited_once_with(["echo", "test"], {"KEY": "VALUE"}, None, False)
+
+@pytest.mark.asyncio
+async def test_execute_with_env_masking():
+    masker = OutputMasker()
+    masker.sensitive("secret-value")
+
+    executer = SubprocessExecuter(processor=masker)
+    executer._run_command = AsyncMock(return_value=ExecutionResult(0, "stdout", "stderr"))
+
+    env = {"VAR1": "value1", "SECRET_VAR": "secret-value"}
+    result = await executer.execute(
+        cmd=["echo", "test"],
+        env=env,
+        mask=True
+    )
+
+    assert result.masked_stdout is not None
+    assert result.masked_stderr is not None
+    assert "******" in masker.mask_env(env).values()
+
+@pytest.mark.asyncio
+async def test_isolate_executer_env_masking(isolate_executer, mocker):
+    """Тест маскирования переменных окружения в IsolateExecuter"""
+    mock_processor = mocker.Mock()
+    mock_processor.mask_env.side_effect = lambda env: {
+        k: "******" if v == "sensitive_value" else v for k, v in env.items()
+    }
+    isolate_executer._processor = mock_processor
+
+    mock_process = AsyncMock()
+    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
+    mocker.patch("src.core.executer.executer.override_env", autospec=True)
+
+    env = {"VAR1": "value1", "SECRET_VAR": "sensitive_value"}
+    await isolate_executer.execute(["echo", "test"], env=env, mask=True)
+
+    mock_processor.mask_env.assert_called_once_with(env)
+    masked_env = mock_processor.mask_env(env)
+
+    with patch("src.core.executer.executer.override_env") as mock_override_env:
+        mock_override_env.assert_called_once_with(masked_env)

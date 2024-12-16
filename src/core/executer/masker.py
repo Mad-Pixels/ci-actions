@@ -1,4 +1,4 @@
-from typing import Set, Pattern
+from typing import Set, Pattern, Dict
 
 import logging
 import re
@@ -33,3 +33,12 @@ class OutputMasker:
         for pattern in self._patterns:
             text = pattern.sub(MASK_STR, text)
         return text
+    
+    def mask_env(self, env: Dict[str, str]) -> Dict[str, str]:
+        masked_env = {}
+        for k, v in env.items():
+            if v in self._sensitive:
+                masked_env[k] = MASK_STR
+                continue
+            masked_env[k] = v
+        return masked_env
