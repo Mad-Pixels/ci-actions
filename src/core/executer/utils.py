@@ -1,7 +1,8 @@
-from typing import Dict
+from typing import Dict, Any
 from contextlib import contextmanager
 
 import os
+import json
 import asyncio
 import logging
 
@@ -36,3 +37,11 @@ async def read_stream(
     except Exception as e:
         logger.error(f"Error reading from {name} stream: {e}")
         raise
+
+def str_to_dict(json_str: str) -> Dict[str, Any]:
+    """Parse string as JSON to dict"""
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        logging.error("Failed to parse str as JSON: %s{e}")
+        return {}
