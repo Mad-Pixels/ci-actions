@@ -3,7 +3,7 @@ from typing import Set, Pattern, Dict
 import logging
 import re
 
-MASK_STR='******'
+MASK_STR = '******'
 
 class OutputMasker:
     """

@@ -11,12 +11,12 @@ def validate_command(cmd: Sequence[str]) -> None:
         raise CommandValidationError(f"Command must be a sequence, got {type(cmd)}")
     for arg in cmd:
         if not isinstance(arg, str):
-            raise CommandValidationError(f"Command arg must be sting, got {type(arg)}")
+            raise CommandValidationError(f"Command arg must be string, got {type(arg)}")
         if any(char in arg for char in ['&', '|', ';', '`', '$', '\\']):
             raise CommandValidationError(f"Invalid command argument: {arg}")
         
 def validate_env(env: Optional[Dict[str, str]]) -> Dict[str, str]:
-    """Validate and sanitize environments variables"""
+    """Validate and sanitize environment variables"""
     if not env:
         return {}
     

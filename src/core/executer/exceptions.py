@@ -14,7 +14,7 @@ class SubprocessError(CommandExecutionError):
         self.stderr = stderr
         self.stdout = stdout
 
-        message = f"Command '{cmd}' failed with return code {returncode}:{stderr}"
+        message = f"Command '{cmd}' failed with return code {returncode}: {stderr}"
         super().__init__(message, cmd)
 
 class CommandValidationError(Exception):

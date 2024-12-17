@@ -1,12 +1,12 @@
-from typing import Dict, Sequence, Optional
+from typing import Dict, Sequence, Optional, AsyncGenerator
 from pathlib import Path
 
 import asyncio
 import os
 
 from .base import BaseExecuter, CommandExecuter, ExecutionResult
+from .utils import override_env, stream_lines
 from .exceptions import SubprocessError
-from .utils import override_env, read_stream
 
 class SubprocessExecuter(BaseExecuter, CommandExecuter):
     """
@@ -14,108 +14,67 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
 
     Features:
     - Supports environment variables and working directory customization.
-    - Allows masking of sensitive data in command output (stdout/stderr).
+    - Masks sensitive data in command output (stdout/stderr).
     - Handles exceptions gracefully and raises SubprocessError on failure.
-
-    Methods:
-        execute: Executes a given command asynchronously and processes the result.
-        _run_command: Internal method to create a subprocess and manage input/output.
     """
 
-    async def execute(
-        self, 
-        cmd: Sequence[str], 
-        env: Dict[str, str]={}, 
-        cwd: Optional[Path]=None, 
-        mask: bool=False,
-    ) -> ExecutionResult:
+    async def execute_stream(
+        self,
+        cmd: Sequence[str],
+        env: Optional[Dict[str, str]] = None,
+        cwd: Optional[Path] = None,
+        mask: bool = False,
+    ) -> AsyncGenerator[str, None]:
         """
-        Execute a system command in a subprocess.
+        Execute a command and yield stdout lines as they become available.
 
         Args:
-            cmd: The command to execute as a sequence of strings (e.g., ["ls", "-l"]).
-            env: Environment variables to pass to the subprocess.
-            cwd: Optional working directory for the subprocess.
-            mask: If True, masks sensitive data in the output using the configured processor.
+            cmd (Sequence[str]): The command to execute as a sequence of strings.
+            env (Optional[Dict[str, str]]): Environment variables to pass.
+            cwd (Optional[Path]): Working directory for the command.
+            mask (bool): Whether to mask sensitive data in the output.
 
-        Returns:
-            ExecutionResult: An object containing the status, stdout, and stderr.
+        Yields:
+            str: Lines of the command's stdout in real-time.
 
         Raises:
             SubprocessError: If the command fails with a non-zero exit code.
         """
-        self._logger.debug(f"Executing command: {' '.join(cmd)}")
+        self._logger.debug(f"Executing command (stream mode): {' '.join(cmd)}")
+        env = env or {}
         self._validate_inputs(cmd, env, cwd)
 
-        result = await self._run_command(cmd, env, cwd)
-        if mask and self._processor:
-            self._logger.debug("Masking output...")
-            return ExecutionResult(
-                status=result.status,
-                stdout=result.stdout,
-                stderr=result.stderr,
-                masked_stdout=self._processor.mask(result.stdout),
-                masked_stderr=self._processor.mask(result.stderr)
-            )
-        return result
+        full_env = {**os.environ, **env}
+        self._logger.debug(f"PATH: {full_env.get('PATH')}")
 
-    async def _run_command(
-        self, 
-        cmd: Sequence[str], 
-        env: Dict[str, str], 
-        cwd: Optional[Path]
-    ) -> ExecutionResult:
-        """
-        Internal method to execute a command and capture output.
-
-        Args:
-            cmd: The command to execute.
-            env: Environment variables for the subprocess.
-            cwd: Working directory for the command execution.
-
-        Returns:
-            ExecutionResult: Captured stdout, stderr, and status code.
-
-        Raises:
-            SubprocessError: Raised when the command exits with a non-zero status.
-            asyncio.CancelledError: If the execution task is cancelled.
-            Exception: For other unexpected errors during execution.
-        """
-        self._logger.debug(f"Creating subprocess: {' '.join(cmd)}")
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env={**os.environ, **env},
+                env=full_env,
                 cwd=cwd
             )
-            stdout_task = asyncio.create_task(
-                read_stream(process.stdout, self._logger, "STDOUT", self._processor)
-            )
-            stderr_task = asyncio.create_task(
-                read_stream(process.stderr, self._logger, "STDERR", self._processor) 
-            )
-            stdout, stderr = await asyncio.gather(stdout_task, stderr_task)
-            await process.wait()
 
-            stdout = stdout.strip()
-            stderr = stderr.strip()
+            async for line in stream_lines(process.stdout, self._logger, "STDOUT", self._processor):
+                masked_line = self._processor.mask(line) if mask and self._processor else line
+                yield masked_line
 
-            if process.returncode != 0:
+            returncode = await process.wait()
+            stderr = await process.stderr.read()
+            stderr_decoded = stderr.decode(errors="replace").strip()
+
+            if returncode != 0:
+                masked_stderr = self._processor.mask(stderr_decoded) if mask and self._processor else stderr_decoded
+                self._logger.error(
+                    f"Command '{' '.join(cmd)}' failed with return code {returncode}: {masked_stderr}"
+                )
                 raise SubprocessError(
                     cmd=' '.join(cmd),
-                    returncode=process.returncode,
-                    stderr=stderr,
-                    stdout=stdout
+                    returncode=returncode,
+                    stderr=masked_stderr,
+                    stdout=""
                 )
-            return ExecutionResult(
-                status=process.returncode,
-                stdout=stdout,
-                stderr=stderr,
-                masked_stdout=self._processor.mask(stdout) if self._processor else None,
-                masked_stderr=self._processor.mask(stderr) if self._processor else None
-            )
         except asyncio.CancelledError:
             self._logger.warning("Command execution was cancelled")
             raise
@@ -130,33 +89,32 @@ class IsolateExecuter(SubprocessExecuter):
     Features:
     - Overrides environment variables during execution for isolation.
     - Inherits all functionality from SubprocessExecuter.
-
-    Methods:
-        execute: Executes a command while temporarily overriding environment variables.
     """
 
-    async def execute(
+    async def execute_stream(
         self,
         cmd: Sequence[str],
-        env: Dict[str, str]={},
-        cwd: Optional[Path]=None,
+        env: Optional[Dict[str, str]] = None,
+        cwd: Optional[Path] = None,
         mask: bool = False,
-    ) -> ExecutionResult:
+    ) -> AsyncGenerator[str, None]:
         """
-        Execute a command with an isolated environment.
+        Execute a command with an isolated environment and yield stdout lines as they become available.
 
         Args:
-            cmd: The command to execute as a sequence of strings.
-            env: Environment variables to override for this execution.
-            cwd: Optional working directory for the subprocess.
-            mask: Whether to mask sensitive data in the output.
+            cmd (Sequence[str]): The command to execute as a sequence of strings.
+            env (Optional[Dict[str, str]]): Environment variables to override for this execution.
+            cwd (Optional[Path]): Working directory for the command.
+            mask (bool): Whether to mask sensitive data in the output.
 
-        Returns:
-            ExecutionResult: Result of the command execution.
+        Yields:
+            str: Lines of the command's stdout in real-time.
 
-        Notes:
-            The environment variables are temporarily overridden using `override_env`.
+        Raises:
+            SubprocessError: If the command fails with a non-zero exit code.
         """
-        self._logger.debug(f"Starting IsolateExecuter.execute")
+        self._logger.debug("Starting IsolateExecuter.execute_stream")
+        env = env or {}
         with override_env(env):
-            return await super().execute(cmd, env, cwd, mask)
+            async for line in super().execute_stream(cmd, env=env, cwd=cwd, mask=mask):
+                yield line

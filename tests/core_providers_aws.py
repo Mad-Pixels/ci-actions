@@ -2,6 +2,7 @@ from src.core.providers.aws import AWSProvider
 
 import pytest
 
+
 def test_aws_provider_minimal_credentials():
     provider = AWSProvider(
         access_key_id="AKIAXXXX",
@@ -18,6 +19,7 @@ def test_aws_provider_minimal_credentials():
         "AWS_ACCESS_KEY_ID": "AKIAXXXX",
         "AWS_SECRET_ACCESS_KEY": "SECRETXXXX"
     }
+
 
 def test_aws_provider_with_session_token():
     provider = AWSProvider(
@@ -39,12 +41,14 @@ def test_aws_provider_with_session_token():
         "AWS_SESSION_TOKEN": "SESSIONXXXX"
     }
 
+
 def test_aws_provider_validation_success():
     provider = AWSProvider(
         access_key_id="AKIAXXXX",
         secret_access_key="SECRETXXXX"
     )
     provider.validate()
+
 
 def test_aws_provider_validation_fail():
     provider = AWSProvider(

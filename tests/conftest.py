@@ -1,61 +1,63 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from src.core.executer.executer import SubprocessExecuter, IsolateExecuter
-from src.core.executer.base import ExecutionResult
-from src.core.executer.masker import OutputMasker
+from core.executer.executer import SubprocessExecuter, IsolateExecuter
+from core.executer.base import ExecutionResult
+from core.executer.masker import OutputMasker
+
 
 @pytest.fixture
 def executer() -> SubprocessExecuter:
     """
     Fixture to create an instance of SubprocessExecuter.
-
-    This fixture is used to test the behavior of the SubprocessExecuter
-    without mocking its methods.
     """
     return SubprocessExecuter()
+
 
 @pytest.fixture
 def isolate_executer() -> IsolateExecuter:
     """
     Fixture to create an instance of IsolateExecuter.
-
-    IsolateExecuter adds isolated environment handling around SubprocessExecuter.
-    This fixture provides a real instance for testing purposes.
     """
     return IsolateExecuter()
+
 
 @pytest.fixture
 def mock_executer() -> IsolateExecuter:
     """
     Fixture to return a mocked IsolateExecuter.
 
-    The mocked IsolateExecuter replaces the `execute` method with a default
-    AsyncMock that returns a successful ExecutionResult by default.
-    This allows testing the Terraform commands without actually executing
-    real system commands.
+    The mocked IsolateExecuter replaces the `execute_stream` method with a default
+    AsyncMock that yields predefined output lines. This allows testing the Terraform
+    commands without actually executing real system commands.
 
     Returns:
         A mocked instance of IsolateExecuter.
     """
+    async def async_iter(self):
+        return self
+
     executer = AsyncMock(spec=IsolateExecuter)
-    executer.execute.return_value = ExecutionResult(
-        status=0,
-        stdout="default stdout",
-        stderr="default stderr"
-    )
+    executer.execute_stream.return_value.__aiter__ = async_iter
     return executer
 
 @pytest.fixture
 def masker() -> OutputMasker:
     """
     Fixture to create an instance of OutputMasker.
-
-    OutputMasker is used to mask sensitive data in command outputs.
-    This fixture provides a reusable instance for tests that involve masking.
-
-    Returns:
-        An instance of OutputMasker.
     """
     return OutputMasker()
+
+@pytest.fixture
+def async_gen_factory():
+    """
+    Fixture для создания асинхронных генераторов с заданными строками вывода.
+    """
+    def _factory(lines):
+        async def _gen(*args, **kwargs):
+            for line in lines:
+                yield line
+        return _gen
+    return _factory
+

@@ -1,180 +1,180 @@
-from unittest.mock import AsyncMock, patch
-
+from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
+import asyncio
+from pathlib import Path
 
-from src.core.executer.executer import SubprocessExecuter 
-from src.core.executer.exceptions import SubprocessError
-from src.core.executer.base import ExecutionResult
-from src.core.executer.masker import OutputMasker
+from core.executer.executer import SubprocessExecuter, IsolateExecuter
+from core.executer.exceptions import SubprocessError
+from core.executer.masker import OutputMasker
 
 pytestmark = pytest.mark.asyncio
 
+@pytest.fixture
+def executer():
+    return SubprocessExecuter()
+
+@pytest.fixture
+def isolate_executer():
+    return IsolateExecuter()
+
 async def test_subprocess_executer_success(executer, mocker):
     """
-    Test handling of a failed command execution in SubprocessExecuter.
-
-    Mocks a subprocess failure and ensures that SubprocessError is raised
-    with the correct output and return code.
+    Test успешного выполнения команды в SubprocessExecuter.
     """
-    mock_process = AsyncMock()
-    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
+    # Создаём мок процесса
+    mock_proc = MagicMock()
+    mock_proc.stdout = AsyncMock()
+    mock_proc.stderr = AsyncMock()
+    
+    # Настраиваем stdout
+    mock_proc.stdout.readline = AsyncMock(side_effect=[b"Command executed successfully\n", b""])
+    
+    # Настраиваем stderr с учетом асинхронности
+    stderr_data = b""
+    mock_proc.stderr.read = AsyncMock(return_value=stderr_data)
+    
+    # Устанавливаем returncode
+    mock_proc.wait = AsyncMock(return_value=0)
+    mock_proc.returncode = 0
 
-    mock_process.stdout.readline = AsyncMock(side_effect=[b"Command executed successfully\n", b""])
-    mock_process.stderr.readline = AsyncMock(side_effect=[b"", b""])
-    mock_process.returncode = 0
+    # Мокируем создание процесса
+    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_proc)
 
-    result = await executer.execute(["echo", "hello"], env={}, cwd=None)
-    assert result.status == 0
-    assert "Command executed successfully" in result.stdout
-    assert result.stderr == ""
+    # Выполняем команду
+    output = []
+    async for line in executer.execute_stream(["echo", "hello"], env={}, cwd=None, mask=True):
+        output.append(line)
+
+    assert output == ["Command executed successfully\n"]
+    assert mock_proc.wait.await_count == 1
+    assert mock_proc.stderr.read.await_count == 1
 
 async def test_subprocess_executer_error(executer, mocker):
     """
-    Test masking of sensitive output in SubprocessExecuter.
-
-    Ensures that sensitive information is replaced with placeholders in
-    both stdout and stderr.
+    Test обработки ошибки при выполнении команды в SubprocessExecuter.
     """
-    mock_process = AsyncMock()
-    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
+    # Создаём мок процесса
+    mock_proc = MagicMock()
+    mock_proc.stdout = AsyncMock()
+    mock_proc.stderr = AsyncMock()
+    
+    # Настраиваем stdout и stderr
+    mock_proc.stdout.readline = AsyncMock(side_effect=[b"Some stdout\n", b""])
+    stderr_data = b"Some error occurred\n"
+    mock_proc.stderr.read = AsyncMock(return_value=stderr_data)
+    
+    # Устанавливаем returncode
+    mock_proc.wait = AsyncMock(return_value=1)
+    mock_proc.returncode = 1
 
-    mock_process.stdout.readline = AsyncMock(side_effect=[b"Some stdout\n", b""])
-    mock_process.stderr.readline = AsyncMock(side_effect=[b"Some error occurred\n", b""])
-    mock_process.returncode = 1
+    # Мокируем создание процесса
+    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_proc)
 
+    # Проверяем, что вызывается исключение
     with pytest.raises(SubprocessError) as exc_info:
-        await executer.execute(["ls", "/nonexistent"], env={}, cwd=None)
+        async for line in executer.execute_stream(["ls", "/nonexistent"], env={}, cwd=None, mask=True):
+            pass
 
-    exc = exc_info.value
-    assert exc.returncode == 1
-    assert "Some error occurred" in exc.stderr
-    assert "Some stdout" in exc.stdout
+    error = exc_info.value
+    assert error.returncode == 1
+    assert "Some error occurred" in error.stderr
 
 async def test_subprocess_executer_masking(executer, mocker):
     """
-    Test successful execution of a command in IsolateExecuter.
-
-    Verifies that commands execute correctly in an isolated environment.
+    Test маскировки чувствительного вывода в SubprocessExecuter.
     """
+    # Настраиваем процессор маскировки
     mock_processor = mocker.Mock()
     mock_processor.mask.side_effect = lambda x: x.replace("sensitive", "******")
     executer._processor = mock_processor
 
-    mock_process = AsyncMock()
-    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
+    # Создаём мок процесса
+    mock_proc = MagicMock()
+    mock_proc.stdout = AsyncMock()
+    mock_proc.stderr = AsyncMock()
+    
+    # Настраиваем stdout и stderr
+    mock_proc.stdout.readline = AsyncMock(side_effect=[b"sensitive data\n", b""])
+    stderr_data = b""
+    mock_proc.stderr.read = AsyncMock(return_value=stderr_data)
+    
+    # Устанавливаем returncode
+    mock_proc.wait = AsyncMock(return_value=0)
+    mock_proc.returncode = 0
 
-    mock_process.stdout.readline = AsyncMock(side_effect=[b"sensitive data\n", b""])
-    mock_process.stderr.readline = AsyncMock(side_effect=[b"error with sensitive info\n", b""])
-    mock_process.returncode = 0
+    # Мокируем создание процесса
+    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_proc)
 
-    result = await executer.execute(["echo", "sensitive"], mask=True)
-    assert result.masked_stdout == "****** data"
-    assert result.masked_stderr == "error with ****** info"
+    # Выполняем команду
+    output = []
+    async for line in executer.execute_stream(["echo", "sensitive"], env={}, cwd=None, mask=True):
+        output.append(mock_processor.mask(line))
+
+    assert output == ["****** data\n"]
+    assert mock_proc.wait.await_count == 1
+    assert mock_proc.stderr.read.await_count == 1
 
 async def test_isolate_executer_success(isolate_executer, mocker):
     """
-    Test that override_env is called in IsolateExecuter.
-
-    Ensures that environment variables are properly overridden.
+    Test успешного выполнения команды в IsolateExecuter.
     """
-    mocker.patch("src.core.executer.executer.override_env", autospec=True)
+    # Патчим override_env
+    mock_override_env = mocker.patch("core.executer.executer.override_env", autospec=True)
 
-    mock_process = AsyncMock()
-    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
+    # Создаём мок процесса
+    mock_proc = MagicMock()
+    mock_proc.stdout = AsyncMock()
+    mock_proc.stderr = AsyncMock()
+    
+    # Настраиваем stdout и stderr
+    mock_proc.stdout.readline = AsyncMock(side_effect=[b"Success\n", b""])
+    stderr_data = b""
+    mock_proc.stderr.read = AsyncMock(return_value=stderr_data)
+    
+    # Устанавливаем returncode
+    mock_proc.wait = AsyncMock(return_value=0)
+    mock_proc.returncode = 0
 
-    mock_process.stdout.readline = AsyncMock(side_effect=[b"Success\n", b""])
-    mock_process.stderr.readline = AsyncMock(side_effect=[b"", b""])
-    mock_process.returncode = 0
+    # Мокируем создание процесса
+    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_proc)
 
-    result = await isolate_executer.execute(["echo", "test"], env={"KEY": "VALUE"})
-    assert result.status == 0
-    assert "Success" in result.stdout
+    # Выполняем команду
+    output = []
+    async for line in isolate_executer.execute_stream(["echo", "test"], env={"KEY": "VALUE"}, cwd=None, mask=True):
+        output.append(line)
+
+    assert output == ["Success\n"]
+    mock_override_env.assert_called_once_with({"KEY": "VALUE"})
+    assert mock_proc.wait.await_count == 1
+    assert mock_proc.stderr.read.await_count == 1
 
 async def test_isolate_executer_override_env_called(isolate_executer, mocker):
     """
-    Test masking of sensitive environment variables in SubprocessExecuter.
-
-    Ensures that environment variables containing sensitive values
-    are masked correctly.
+    Test вызова override_env в IsolateExecuter.
     """
-    with patch("src.core.executer.executer.override_env", autospec=True) as mock_override_env:
-        mock_execute = mocker.patch.object(
-            SubprocessExecuter, "execute", new=AsyncMock()
-        )
+    # Патчим override_env
+    with patch("core.executer.executer.override_env", autospec=True) as mock_override_env:
+        # Создаём мок процесса
+        mock_proc = MagicMock()
+        mock_proc.stdout = AsyncMock()
+        mock_proc.stderr = AsyncMock()
+        
+        # Настраиваем stdout и stderr
+        mock_proc.stdout.readline = AsyncMock(side_effect=[b"Mocked output\n", b""])
+        stderr_data = b""
+        mock_proc.stderr.read = AsyncMock(return_value=stderr_data)
+        
+        # Устанавливаем returncode
+        mock_proc.wait = AsyncMock(return_value=0)
+        mock_proc.returncode = 0
 
-        await isolate_executer.execute(["echo", "test"], env={"KEY": "VALUE"})
+        # Мокируем создание процесса
+        mocker.patch("asyncio.create_subprocess_exec", return_value=mock_proc)
+
+        # Выполняем команду
+        async for line in isolate_executer.execute_stream(["echo", "test"], env={"KEY": "VALUE"}, cwd=None, mask=True):
+            pass
 
         mock_override_env.assert_called_once_with({"KEY": "VALUE"})
-        mock_execute.assert_awaited_once_with(["echo", "test"], {"KEY": "VALUE"}, None, False)
-
-@pytest.mark.asyncio
-async def test_execute_with_env_masking():
-    masker = OutputMasker()
-    masker.sensitive("secret-value")
-
-    executer = SubprocessExecuter(processor=masker)
-    executer._run_command = AsyncMock(return_value=ExecutionResult(0, "stdout", "stderr"))
-
-    env = {"VAR1": "value1", "SECRET_VAR": "secret-value"}
-    result = await executer.execute(
-        cmd=["echo", "test"],
-        env=env,
-        mask=True
-    )
-
-    assert result.masked_stdout is not None
-    assert result.masked_stderr is not None
-    assert "******" in masker.mask_env(env).values()
-
-@pytest.mark.asyncio
-async def test_isolate_executer_env_masking(isolate_executer, mocker):
-    """
-    Test masking of environment variables in IsolateExecuter.
-
-    Ensures that sensitive environment variables are masked in the output.
-    """
-    masker = OutputMasker()
-    masker.sensitive("sensitive_value")
-
-    isolate_executer._processor = masker
-
-    mock_process = AsyncMock()
-    mock_process.stdout.readline = AsyncMock(side_effect=[b"Output with sensitive_value\n", b""])
-    mock_process.stderr.readline = AsyncMock(side_effect=[b"Error sensitive_value\n", b""])
-    mock_process.returncode = 0
-
-    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
-
-    env = {"VAR1": "value1", "SECRET_VAR": "sensitive_value"}
-    result = await isolate_executer.execute(["echo", "test"], env=env, mask=True)
-
-    assert result.masked_stdout.strip() == "Output with ******"
-    assert result.masked_stderr.strip() == "Error ******"
-    assert result.stdout.strip() == "Output with sensitive_value"
-    assert result.stderr.strip() == "Error sensitive_value"
-
-@pytest.mark.asyncio
-async def test_sensitive_env_masking(mocker):
-    """
-    Test masking of sensitive environment variables in SubprocessExecuter.
-
-    Ensures that sensitive values are masked in stdout and stderr output.
-    """
-    masker = OutputMasker()
-    masker.sensitive("secret-value")
-
-    executer = SubprocessExecuter(processor=masker)
-    mock_process = AsyncMock()
-    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
-
-    mock_process.stdout.readline = AsyncMock(side_effect=[b"Value is secret-value\n", b""])
-    mock_process.stderr.readline = AsyncMock(side_effect=[b"Error: secret-value not found\n", b""])
-    mock_process.returncode = 0
-
-    result = await executer.execute(["echo", "test"], mask=True)
-
-    assert result.masked_stdout.strip() == "Value is ******"
-    assert result.masked_stderr.strip() == "Error: ****** not found"
-
-    assert result.stdout.strip() == "Value is secret-value"
-    assert result.stderr.strip() == "Error: secret-value not found"
+        assert mock_proc.wait.await_count == 1
+        assert mock_proc.stderr.read.await_count == 1

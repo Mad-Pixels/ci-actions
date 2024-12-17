@@ -2,7 +2,7 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
-from src.core.executer.base import ExecutionResult
+from core.executer.base import ExecutionResult
 
 class TerraformAction(Enum):
     INIT = "init"
