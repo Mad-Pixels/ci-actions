@@ -1,10 +1,12 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from contextlib import contextmanager
 
 import os
 import json
 import asyncio
 import logging
+
+from .masker import OutputMasker
 
 @contextmanager
 def override_env(env: Dict[str, str]):
@@ -21,16 +23,19 @@ async def read_stream(
     stream: asyncio.StreamReader,
     logger: logging.Logger,
     name: str,
+    processor: Optional[OutputMasker] = None,
 ) -> str:
-    """Read from a stream asynchronously with logging"""
+    """Read from a stream asynchronously with optional masking"""
     output = []
     try:
         while True:
             line = await stream.readline()
             if not line:
                 break
-            
-            decoded = line.decode(errors='replace')
+
+            decoded = line.decode(errors="replace")
+            if processor:
+                decoded = processor.mask(decoded)
             logger.debug(f"[{name}] {decoded.strip()}")
             output.append(decoded)
         return ''.join(output)

@@ -106,21 +106,50 @@ async def test_execute_with_env_masking():
 @pytest.mark.asyncio
 async def test_isolate_executer_env_masking(isolate_executer, mocker):
     """Тест маскирования переменных окружения в IsolateExecuter"""
-    mock_processor = mocker.Mock()
-    mock_processor.mask_env.side_effect = lambda env: {
-        k: "******" if v == "sensitive_value" else v for k, v in env.items()
-    }
-    isolate_executer._processor = mock_processor
+    # Используем настоящий OutputMasker
+    masker = OutputMasker()
+    masker.sensitive("sensitive_value")
 
+    isolate_executer._processor = masker
+
+    # Мок процесса и вызовов readline
     mock_process = AsyncMock()
+    mock_process.stdout.readline = AsyncMock(side_effect=[b"Output with sensitive_value\n", b""])
+    mock_process.stderr.readline = AsyncMock(side_effect=[b"Error sensitive_value\n", b""])
+    mock_process.returncode = 0
+
     mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
-    mocker.patch("src.core.executer.executer.override_env", autospec=True)
 
     env = {"VAR1": "value1", "SECRET_VAR": "sensitive_value"}
-    await isolate_executer.execute(["echo", "test"], env=env, mask=True)
+    result = await isolate_executer.execute(["echo", "test"], env=env, mask=True)
 
-    mock_processor.mask_env.assert_called_once_with(env)
-    masked_env = mock_processor.mask_env(env)
+    # Проверка маскирования
+    assert result.masked_stdout.strip() == "Output with ******"
+    assert result.masked_stderr.strip() == "Error ******"
+    assert result.stdout.strip() == "Output with sensitive_value"
+    assert result.stderr.strip() == "Error sensitive_value"
 
-    with patch("src.core.executer.executer.override_env") as mock_override_env:
-        mock_override_env.assert_called_once_with(masked_env)
+@pytest.mark.asyncio
+async def test_sensitive_env_masking(mocker):
+    """Тест маскирования содержимого чувствительных переменных окружения в stdout"""
+    masker = OutputMasker()
+    masker.sensitive("secret-value")
+
+    executer = SubprocessExecuter(processor=masker)
+    mock_process = AsyncMock()
+    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_process)
+
+    # Моделируем вывод команды с чувствительными данными
+    mock_process.stdout.readline = AsyncMock(side_effect=[b"Value is secret-value\n", b""])
+    mock_process.stderr.readline = AsyncMock(side_effect=[b"Error: secret-value not found\n", b""])
+    mock_process.returncode = 0
+
+    result = await executer.execute(["echo", "test"], mask=True)
+
+    # Проверяем, что чувствительные данные заменены на "******"
+    assert result.masked_stdout.strip() == "Value is ******"
+    assert result.masked_stderr.strip() == "Error: ****** not found"
+
+    # Оригинальный stdout/stderr остаётся неизменным
+    assert result.stdout.strip() == "Value is secret-value"
+    assert result.stderr.strip() == "Error: secret-value not found"

@@ -28,7 +28,11 @@ class Terraform:
         self._base_cwd = base_cwd
         self._executer = executer
         self._env = base_env or {}
-        self._masker = get_default_masker(sensitive or {})
+
+        processor = getattr(self._executer, "_processor", None)
+        if sensitive and processor:
+            for val in filter(None, sensitive.values()):
+                processor.sensitive(val)
 
     async def init(self, args: Optional[List[str]]=None) -> TerraformResult:
         """Invoke 'terraform init' with args"""
@@ -101,17 +105,7 @@ class Terraform:
             full_envs.update(env)
         
         try:
-            res = await self._executer.execute(cmd, env=full_envs, cwd=self._base_cwd, mask=True)
-            masked_stdout = self._masker.mask(res.stdout)
-            masked_stderr = self._masker.mask(res.stderr)
-
-            return ExecutionResult(
-                status=res.status,
-                stdout=res.stdout,
-                stderr=res.stderr,
-                masked_stdout=masked_stdout,
-                masked_stderr=masked_stderr
-            )
+            return await self._executer.execute(cmd, env=full_envs, cwd=self._base_cwd, mask=True)
         except Exception as e:
             logger.error(f"Error executing terraform {action.value} command: {e}", exc_info=True)
             raise TerraformExecutionError(action.value, str(e))

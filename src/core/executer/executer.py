@@ -20,12 +20,8 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
     ) -> ExecutionResult:
         self._logger.debug(f"Executing command: {' '.join(cmd)}")
         self._validate_inputs(cmd, env, cwd)
-        
-        masked_env = self._processor.mask_env(env) if self._processor and mask else env
-        self._logger.debug(f"Environment variables: {masked_env}")
 
         result = await self._run_command(cmd, env, cwd)
-
         if mask and self._processor:
             self._logger.debug("Masking output...")
             return ExecutionResult(

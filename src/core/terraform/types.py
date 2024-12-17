@@ -17,5 +17,3 @@ class TerraformResult:
     action: TerraformAction
     result: ExecutionResult
     outputs: Optional[Dict[str, Any]] = None
-
-    #TODO: some additional data we can put here.

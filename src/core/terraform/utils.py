@@ -14,5 +14,3 @@ def get_default_masker(sensitive: Dict[str, str]) -> OutputMasker:
         if val:
             masker.sensitive(val)
     return masker
-
-# TODO impleament default data for masking.
