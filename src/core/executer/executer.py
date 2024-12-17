@@ -9,7 +9,18 @@ from .exceptions import SubprocessError
 from .utils import override_env, read_stream
 
 class SubprocessExecuter(BaseExecuter, CommandExecuter):
-    """Subprocess-based command executor"""
+    """
+    Executes system commands in a subprocess.
+
+    Features:
+    - Supports environment variables and working directory customization.
+    - Allows masking of sensitive data in command output (stdout/stderr).
+    - Handles exceptions gracefully and raises SubprocessError on failure.
+
+    Methods:
+        execute: Executes a given command asynchronously and processes the result.
+        _run_command: Internal method to create a subprocess and manage input/output.
+    """
 
     async def execute(
         self, 
@@ -18,6 +29,21 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
         cwd: Optional[Path]=None, 
         mask: bool=False,
     ) -> ExecutionResult:
+        """
+        Execute a system command in a subprocess.
+
+        Args:
+            cmd: The command to execute as a sequence of strings (e.g., ["ls", "-l"]).
+            env: Environment variables to pass to the subprocess.
+            cwd: Optional working directory for the subprocess.
+            mask: If True, masks sensitive data in the output using the configured processor.
+
+        Returns:
+            ExecutionResult: An object containing the status, stdout, and stderr.
+
+        Raises:
+            SubprocessError: If the command fails with a non-zero exit code.
+        """
         self._logger.debug(f"Executing command: {' '.join(cmd)}")
         self._validate_inputs(cmd, env, cwd)
 
@@ -39,6 +65,22 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
         env: Dict[str, str], 
         cwd: Optional[Path]
     ) -> ExecutionResult:
+        """
+        Internal method to execute a command and capture output.
+
+        Args:
+            cmd: The command to execute.
+            env: Environment variables for the subprocess.
+            cwd: Working directory for the command execution.
+
+        Returns:
+            ExecutionResult: Captured stdout, stderr, and status code.
+
+        Raises:
+            SubprocessError: Raised when the command exits with a non-zero status.
+            asyncio.CancelledError: If the execution task is cancelled.
+            Exception: For other unexpected errors during execution.
+        """
         self._logger.debug(f"Creating subprocess: {' '.join(cmd)}")
         try:
             process = await asyncio.create_subprocess_exec(
@@ -82,7 +124,16 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
             raise
 
 class IsolateExecuter(SubprocessExecuter):
-    """Isolater environment command executor"""
+    """
+    Specialized executor that isolates the command execution environment.
+
+    Features:
+    - Overrides environment variables during execution for isolation.
+    - Inherits all functionality from SubprocessExecuter.
+
+    Methods:
+        execute: Executes a command while temporarily overriding environment variables.
+    """
 
     async def execute(
         self,
@@ -91,6 +142,21 @@ class IsolateExecuter(SubprocessExecuter):
         cwd: Optional[Path]=None,
         mask: bool = False,
     ) -> ExecutionResult:
+        """
+        Execute a command with an isolated environment.
+
+        Args:
+            cmd: The command to execute as a sequence of strings.
+            env: Environment variables to override for this execution.
+            cwd: Optional working directory for the subprocess.
+            mask: Whether to mask sensitive data in the output.
+
+        Returns:
+            ExecutionResult: Result of the command execution.
+
+        Notes:
+            The environment variables are temporarily overridden using `override_env`.
+        """
         self._logger.debug(f"Starting IsolateExecuter.execute")
         with override_env(env):
             return await super().execute(cmd, env, cwd, mask)

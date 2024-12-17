@@ -14,7 +14,6 @@ from src.core.providers.aws import AWSProvider
 pytestmark = pytest.mark.asyncio
 
 async def test_terraform_init(mock_executer):
-    # Есть sensitive={"SECRET": "supersecret"}, значит в env должен быть SECRET
     terraform = Terraform(
         base_cwd=Path("/tmp"),
         executer=mock_executer,
@@ -27,7 +26,6 @@ async def test_terraform_init(mock_executer):
     assert result.result.status == 0
     assert "default stdout" in result.result.stdout
 
-    # Теперь ожидаем, что SECRET тоже будет в env
     mock_executer.execute.assert_awaited_once_with(
         ["terrafrom", "init"],
         env={"BASE_VAR": "value", "SECRET": "supersecret"},
@@ -42,7 +40,6 @@ async def test_terraform_plan(mock_executer):
         stderr="plan stderr"
     )
 
-    # Тут нет sensitive, значит env будет только base_env и TF_VAR_*
     terraform = Terraform(
         base_cwd=Path("/project"),
         executer=mock_executer,

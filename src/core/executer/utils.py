@@ -10,7 +10,20 @@ from .masker import OutputMasker
 
 @contextmanager
 def override_env(env: Dict[str, str]):
-    """Context manager for safely modifying environment variables"""
+    """
+    Context manager for temporarily modifying environment variables.
+
+    Ensures that the original environment variables are restored after the operation.
+
+    Args:
+        env: A dictionary containing environment variables to temporarily override.
+
+    Usage:
+        with override_env({"KEY": "VALUE"}):
+            # The environment variable KEY will temporarily be set to VALUE
+            ...
+        # Environment is restored to its original state after the block.
+    """
     origin = dict(os.environ)
     try:
         os.environ.update(env)
@@ -25,6 +38,21 @@ async def read_stream(
     name: str,
     processor: Optional[OutputMasker] = None,
 ) -> str:
+    """
+    Reads lines asynchronously from a stream and applies masking if necessary.
+
+    Args:
+        stream: An asyncio.StreamReader object to read from.
+        logger: A logging.Logger instance to log each line (masked if applicable).
+        name: A string identifying the stream (e.g., "STDOUT" or "STDERR").
+        processor: An optional OutputMasker instance for masking sensitive data.
+
+    Returns:
+        A string containing the full output read from the stream.
+
+    Raises:
+        Exception: If an error occurs during stream reading.
+    """
     output = []
     try:
         while True:
@@ -42,7 +70,19 @@ async def read_stream(
         raise
 
 def str_to_dict(json_str: str) -> Dict[str, Any]:
-    """Parse string as JSON to dict"""
+    """
+    Parses a JSON-formatted string into a dictionary.
+
+    Args:
+        json_str: A string containing JSON-formatted data.
+
+    Returns:
+        A dictionary representation of the JSON string.
+        Returns an empty dictionary if the string is invalid.
+
+    Logs:
+        Logs an error if parsing fails.
+    """
     try:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
