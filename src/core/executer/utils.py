@@ -25,18 +25,16 @@ async def read_stream(
     name: str,
     processor: Optional[OutputMasker] = None,
 ) -> str:
-    """Read from a stream asynchronously with optional masking"""
     output = []
     try:
         while True:
             line = await stream.readline()
             if not line:
                 break
-
             decoded = line.decode(errors="replace")
-            if processor:
-                decoded = processor.mask(decoded)
-            logger.debug(f"[{name}] {decoded.strip()}")
+
+            line_for_log = processor.mask(decoded) if processor else decoded
+            logger.debug(f"[{name}] {line_for_log.strip()}")
             output.append(decoded)
         return ''.join(output)
     except Exception as e:

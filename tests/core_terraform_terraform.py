@@ -6,11 +6,15 @@ import pytest
 from src.core.terraform.terraform import Terraform
 from src.core.terraform.types import TerraformAction
 from src.core.terraform.exceptions import TerraformExecutionError
+from src.core.executer.executer import IsolateExecuter
 from src.core.executer.base import ExecutionResult
+from src.core.executer.masker import OutputMasker
+from src.core.providers.aws import AWSProvider
 
 pytestmark = pytest.mark.asyncio
 
 async def test_terraform_init(mock_executer):
+    # Есть sensitive={"SECRET": "supersecret"}, значит в env должен быть SECRET
     terraform = Terraform(
         base_cwd=Path("/tmp"),
         executer=mock_executer,
@@ -23,9 +27,10 @@ async def test_terraform_init(mock_executer):
     assert result.result.status == 0
     assert "default stdout" in result.result.stdout
 
+    # Теперь ожидаем, что SECRET тоже будет в env
     mock_executer.execute.assert_awaited_once_with(
         ["terrafrom", "init"],
-        env={"BASE_VAR": "value"},
+        env={"BASE_VAR": "value", "SECRET": "supersecret"},
         cwd=Path("/tmp"),
         mask=True
     )
@@ -37,6 +42,7 @@ async def test_terraform_plan(mock_executer):
         stderr="plan stderr"
     )
 
+    # Тут нет sensitive, значит env будет только base_env и TF_VAR_*
     terraform = Terraform(
         base_cwd=Path("/project"),
         executer=mock_executer,
@@ -127,5 +133,42 @@ async def test_terraform_output(mock_executer):
         ["terraform", "output", "-json"],
         env={},
         cwd=Path("/env"),
+        mask=True
+    )
+
+async def test_terraform_with_aws_provider(mocker):
+    provider = AWSProvider(
+        access_key_id="AKIAXXXX",
+        secret_access_key="SECRETXXXX"
+    )
+    executer = IsolateExecuter(processor=OutputMasker())
+    executer.execute = AsyncMock(return_value=ExecutionResult(
+        status=0,
+        stdout="Applied successfully with secret: SECRETXXXX",
+        stderr="",
+        masked_stdout="Applied successfully with secret: ******",
+        masked_stderr=""
+    ))
+
+    terraform = Terraform(
+        base_cwd=Path("/aws_project"),
+        executer=executer,
+        provider=provider,
+        sensitive={"EXTRA_SECRET": "myextrasecret"}
+    )
+
+    result = await terraform.apply()
+    assert result.action == TerraformAction.APPLY
+    assert "SECRETXXXX" not in (result.result.masked_stdout or "")
+    assert "******" in (result.result.masked_stdout or "")
+
+    executer.execute.assert_awaited_once_with(
+        ["terraform", "apply", "-input=false", "-auto-approve"],
+        env={
+            "AWS_ACCESS_KEY_ID": "AKIAXXXX",
+            "AWS_SECRET_ACCESS_KEY": "SECRETXXXX",
+            "EXTRA_SECRET": "myextrasecret"
+        },
+        cwd=Path("/aws_project"),
         mask=True
     )

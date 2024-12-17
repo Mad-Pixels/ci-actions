@@ -49,10 +49,10 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
                 cwd=cwd
             )
             stdout_task = asyncio.create_task(
-                read_stream(process.stdout, self._logger, "STDOUT")
+                read_stream(process.stdout, self._logger, "STDOUT", self._processor)
             )
             stderr_task = asyncio.create_task(
-                read_stream(process.stderr, self._logger, "STDERR")
+                read_stream(process.stderr, self._logger, "STDERR", self._processor) 
             )
             stdout, stderr = await asyncio.gather(stdout_task, stderr_task)
             await process.wait()
@@ -70,7 +70,9 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
             return ExecutionResult(
                 status=process.returncode,
                 stdout=stdout,
-                stderr=stderr
+                stderr=stderr,
+                masked_stdout=self._processor.mask(stdout) if self._processor else None,
+                masked_stderr=self._processor.mask(stderr) if self._processor else None
             )
         except asyncio.CancelledError:
             self._logger.warning("Command execution was cancelled")

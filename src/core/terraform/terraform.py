@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 
 from src.core.executer.executer import IsolateExecuter, ExecutionResult
+from src.core.providers.base import BaseProvider
 from .types import TerraformAction, TerraformResult
 from .exceptions import TerraformExecutionError
 from .utils import parse_terraform_output, get_default_masker
@@ -16,24 +17,35 @@ class Terraform:
         self,
         base_cwd: Path,
         executer: IsolateExecuter,
+        provider: Optional[BaseProvider]=None,
         base_env: Optional[Dict[str, str]]=None,
         sensitive: Optional[Dict[str, str]]=None,
     ):
         """
         :param base_cwd: The directory where Terraform commands will be executed
         :param executer: An instance of a class implementing the CommandExecuter interface
-        :param base_env: Base environment variables (e.g., AWS credentials)
-        :param sensitive_data: Sensitive data to be masked in the logs
+        :param provider: An optional provider instance for authorization
+        :param base_env: Base environment variables (e.g., AWS credentials or other)
+        :param sensitive: Additional sensitive data to be masked
         """
         self._base_cwd = base_cwd
         self._executer = executer
         self._env = base_env or {}
 
+        if provider:
+            provider.validate()
+            provider_env = provider.get_environment()
+            self._env.update(provider_env)
+
+        self._all_sensitive = sensitive or {}
+        if provider:
+            self._all_sensitive.update(provider.get_sensitive())
+
         processor = getattr(self._executer, "_processor", None)
         if sensitive and processor:
             for val in filter(None, sensitive.values()):
                 processor.sensitive(val)
-
+        
     async def init(self, args: Optional[List[str]]=None) -> TerraformResult:
         """Invoke 'terraform init' with args"""
         cmd = ["terrafrom", "init"]
@@ -103,6 +115,7 @@ class Terraform:
         full_envs = dict(self._env)
         if env:
             full_envs.update(env)
+        full_envs.update(self._all_sensitive)
         
         try:
             return await self._executer.execute(cmd, env=full_envs, cwd=self._base_cwd, mask=True)

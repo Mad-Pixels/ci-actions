@@ -56,6 +56,6 @@ class BaseExecuter(ABC):
         self,
         cmd: Sequence[str],
         env: Dict[str, str],
-        cwd: Optional[Path]
+        cwd: Optional[Path],
     ) -> ExecutionResult:
         pass
