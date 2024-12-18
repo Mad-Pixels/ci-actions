@@ -62,8 +62,11 @@ class Terraform:
 
         processor = getattr(self._executer, "_processor", None)
         if sensitive and processor:
-            for val in filter(None, sensitive.values()):
+            for val in filter(None, self._all_sensitive.values()):
                 processor.sensitive(val)
+            if provider:
+                for pattern in provider.get_predefined_masked_objects():
+                    processor.add_pattern(pattern)
 
     async def _run_command(
         self,

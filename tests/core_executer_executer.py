@@ -375,3 +375,81 @@ async def test_subprocess_executer_various_cases(executer, mocker, cmd, returnco
             output.append(result)
     
     assert final_result.status == expected_status
+
+from core.providers.aws import AWSProvider
+from core.executer.masker import OutputMasker
+from core.executer.executer import IsolateExecuter
+
+@pytest.mark.asyncio
+async def test_isolate_executer_masking_with_predefined_patterns(mocker):
+    """
+    Тестирует маскирование выходных данных с использованием предопределённых шаблонов из провайдера.
+    """
+    # Создаём провайдера AWS
+    provider = AWSProvider(
+        access_key_id="AKIAXXXXX",
+        secret_access_key="SECRETXXXX",
+        session_token="SESSIONXXXX"
+    )
+
+    # Инициализируем OutputMasker и добавляем шаблоны из провайдера
+    masker = OutputMasker()
+    for pattern in provider.get_predefined_masked_objects():
+        masker.add_pattern(pattern)  # Используем add_pattern вместо sensitive
+
+    # Мокаем IsolateExecuter и устанавливаем _processor
+    executer = IsolateExecuter()
+    executer._processor = masker
+
+    # Мокаем subprocess.Popen объект
+    mock_proc = MagicMock()
+    mock_proc.stdout = AsyncMock()
+    mock_proc.stderr = AsyncMock()
+
+    # Симулируем вывод в stdout и stderr
+    mock_proc.stdout.readline = AsyncMock(side_effect=[
+        b"arn:aws:iam::123456789012:role/AdminRole\n",
+        b"Some regular output\n",
+        b"arn:aws:s3:::my-bucket\n",
+        b""
+    ])
+    mock_proc.stderr.readline = AsyncMock(side_effect=[
+        b"Error arn:aws:ec2:us-west-2:123456789012:instance/i-0abcd1234efgh5678\n",
+        b"Another error line\n",
+        b""
+    ])
+
+    # Симулируем успешное завершение процесса
+    mock_proc.wait = AsyncMock(return_value=0)
+    mock_proc.returncode = 0
+
+    # Патчим asyncio.create_subprocess_exec, чтобы возвращать мок-объект процесса
+    mocker.patch("asyncio.create_subprocess_exec", return_value=mock_proc)
+
+    output = []
+    final_result = None
+    async for result in executer.execute_stream(["echo", "test"], env={"KEY": "VALUE"}, cwd=None, mask=True):
+        if isinstance(result, ExecutionResult):
+            final_result = result
+        else:
+            output.append(result)
+
+    # Ожидаемый маскированный вывод с префиксами
+    expected_output = [
+        "[stdout] ******\n",  # Маскировано ARN роли
+        "[stdout] Some regular output\n",
+        "[stdout] ******\n",  # Маскировано ARN S3 bucket
+        "[stderr] Error ******-0abcd1234efgh5678\n",  # Маскировано только часть ARN EC2 instance
+        "[stderr] Another error line\n"
+    ]
+
+    # Проверяем, что вывод соответствует ожиданиям
+    assert output == expected_output
+
+    # Проверяем, что ExecutionResult был возвращён с полными данными
+    assert final_result is not None
+    assert final_result.status == 0
+    assert final_result.stdout == "arn:aws:iam::123456789012:role/AdminRole\nSome regular output\narn:aws:s3:::my-bucket\n"
+    assert final_result.stderr == "Error arn:aws:ec2:us-west-2:123456789012:instance/i-0abcd1234efgh5678\nAnother error line\n"
+    assert final_result.masked_stdout == "******\nSome regular output\n******\n"
+    assert final_result.masked_stderr == "Error ******-0abcd1234efgh5678\nAnother error line\n"

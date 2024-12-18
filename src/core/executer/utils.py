@@ -9,7 +9,7 @@ import logging
 from .masker import OutputMasker
 
 @asynccontextmanager
-def override_env(env: Dict[str, str]):
+async def override_env(env: Dict[str, str]):
     """
     Context manager for temporarily modifying environment variables.
 
