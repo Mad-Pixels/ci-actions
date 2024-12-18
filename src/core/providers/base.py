@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, List, Tuple
 from abc import ABC, abstractmethod
 
 class BaseProvider(ABC):
@@ -44,6 +44,15 @@ class BaseProvider(ABC):
             ValueError: If required credentials are missing or invalid.
         """
         pass
+
+    def get_predefined_masked_objects(self) -> List[str]:
+        """
+        Retrieve a list of predefined sensitive objects that should be masked.
+
+        Returns:
+            List[str]: A list of strings representing sensitive objects to be masked.
+        """
+        return []
 
     def _generate_env_and_sensitive(self, credentials: Dict[str, str]) -> Tuple[Dict[str, str], Dict[str, str]]:
         """
