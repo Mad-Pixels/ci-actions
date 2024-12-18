@@ -203,7 +203,7 @@ class Terraform:
         
         stdout = ''.join(output_lines).strip()
         try:
-            outputs = parse_terraform_output(stdout)
+            outputs = parse_terraform_output(stdout, logger)
             return outputs
         except Exception as e:
             logger.error(f"Error parsing terraform output: {e}", exc_info=True)

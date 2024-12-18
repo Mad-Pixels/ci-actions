@@ -5,7 +5,7 @@ import asyncio
 import os
 
 from .base import BaseExecuter, CommandExecuter, ExecutionResult
-from .utils import override_env, read_stream_lines
+from .utils import override_env, stream_lines
 from .exceptions import SubprocessError
 
 class SubprocessExecuter(BaseExecuter, CommandExecuter):
@@ -64,6 +64,14 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
         masked_stdout_lines: List[str] = []
         masked_stderr_lines: List[str] = []
 
+        queue: asyncio.Queue = asyncio.Queue()
+        async def reader(stream: asyncio.StreamReader, name: str):
+            try:
+                async for line in stream_lines(stream, self._logger, name, self._processor):
+                    await queue.put((name, line))
+            except Exception as e:
+                await queue.put(("error", e))
+
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -72,45 +80,46 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
                 env={**os.environ, **env},
                 cwd=cwd
             )
-            stdout_task = asyncio.create_task(
-                read_stream_lines(process.stdout, self._logger, "STDOUT", self._processor)
-            )
-            stderr_task = asyncio.create_task(
-                read_stream_lines(process.stderr, self._logger, "STDERR", self._processor)
-            )
+            stdout_task = asyncio.create_task(reader(process.stdout, "STDOUT"))
+            stderr_task = asyncio.create_task(reader(process.stderr, "STDERR"))
 
-            pending = {stdout_task, stderr_task}
-            while pending:
-                done, pending = await asyncio.wait(
-                    pending,
-                    return_when=asyncio.FIRST_COMPLETED
-                )
-                
-                for task in done:
-                    try:
-                        lines = await task
-                        is_stdout = task == stdout_task
-                        stream_type = "stdout" if is_stdout else "stderr"
-                        
-                        for line in lines:
-                            masked_line = self._processor.mask(line) if mask and self._processor else line
-                            
-                            if is_stdout:
-                                stdout_lines.append(line)
-                                if mask:
-                                    masked_stdout_lines.append(masked_line)
-                            else:
-                                stderr_lines.append(line)
-                                if mask:
-                                    masked_stderr_lines.append(masked_line)
-                            
-                            yield f"[{stream_type}] {masked_line if mask else line}"
-                            
-                    except Exception as e:
-                        self._logger.error(f"Error processing stream: {e}", exc_info=True)
-                        for t in pending:
-                            t.cancel()
-                        raise
+            while True:
+                try:
+                    name, content = await queue.get()
+                    if name == "error":
+                        self._logger.error(f"Error processing stream: {content}", exc_info=True)
+                        process.kill()
+                        await process.wait()
+                        raise content
+
+                    is_stdout = name == "STDOUT"
+                    stream_type = "stdout" if is_stdout else "stderr"
+                    masked_line = self._processor.mask(content) if mask and self._processor else content
+
+                    if is_stdout:
+                        stdout_lines.append(content)
+                        if mask:
+                            masked_stdout_lines.append(masked_line)
+                    else:
+                        stderr_lines.append(content)
+                        if mask:
+                            masked_stderr_lines.append(masked_line)
+
+                    yield f"[{stream_type}] {masked_line if mask else content}"
+
+                except asyncio.CancelledError:
+                    self._logger.warning("Command execution was cancelled")
+                    process.kill()
+                    await process.wait()
+                    raise
+                except Exception as e:
+                    self._logger.error(f"Subprocess execution error: {e}", exc_info=True)
+                    process.kill()
+                    await process.wait()
+                    raise
+
+                if stdout_task.done() and stderr_task.done() and queue.empty():
+                    break
 
             status = await process.wait()
             yield ExecutionResult(
@@ -123,9 +132,13 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
 
         except asyncio.CancelledError:
             self._logger.warning("Command execution was cancelled")
+            process.kill()
+            await process.wait()
             raise
         except Exception as e:
             self._logger.error(f"Subprocess execution error: {e}", exc_info=True)
+            process.kill()
+            await process.wait()
             raise
 
 
@@ -163,6 +176,6 @@ class IsolateExecuter(SubprocessExecuter):
         """
         self._logger.debug("Starting IsolateExecuter.execute_stream")
         env = env or {}
-        with override_env(env):
+        async with override_env(env):
             async for line in super().execute_stream(cmd, env=env, cwd=cwd, mask=mask):
                 yield line
