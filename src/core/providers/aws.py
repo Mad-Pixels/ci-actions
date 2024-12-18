@@ -31,9 +31,12 @@ class AWSProvider(BaseProvider):
             secret_access_key (str): AWS secret access key.
             session_token (Optional[str]): Optional session token for temporary credentials.
         """
-        self.access_key_id = access_key_id
-        self.secret_access_key = secret_access_key
-        self.session_token = session_token
+        self.credentials = {
+            "AWS_ACCESS_KEY_ID": access_key_id,
+            "AWS_SECRET_ACCESS_KEY": secret_access_key
+        }
+        if session_token:
+            self.credentials["AWS_SESSION_TOKEN"] = session_token
 
     def get_environment(self) -> Dict[str, str]:
         """
@@ -42,13 +45,8 @@ class AWSProvider(BaseProvider):
         Returns:
             Dict[str, str]: A dictionary with AWS credentials for the environment.
         """
-        env = {
-            "AWS_ACCESS_KEY_ID": self.access_key_id,
-            "AWS_SECRET_ACCESS_KEY": self.secret_access_key
-        }
-        if self.session_token:
-            env["AWS_SESSION_TOKEN"] = self.session_token
-        return env
+        environment, _ = self._generate_env_and_sensitive(self.credentials)
+        return environment
     
     def get_sensitive(self) -> Dict[str, str]:
         """
@@ -57,13 +55,8 @@ class AWSProvider(BaseProvider):
         Returns:
             Dict[str, str]: A dictionary with sensitive AWS credentials.
         """
-        sens = {
-            "AWS_ACCESS_KEY_ID": self.access_key_id,
-            "AWS_SECRET_ACCESS_KEY": self.secret_access_key
-        }
-        if self.session_token:
-            sens["AWS_SESSION_TOKEN"] = self.session_token
-        return sens
+        _, sensitive = self._generate_env_and_sensitive(self.credentials)
+        return sensitive
     
     def validate(self) -> None:
         """
@@ -72,5 +65,5 @@ class AWSProvider(BaseProvider):
         Raises:
             ValueError: If AWS credentials are incomplete or missing.
         """
-        if not self.access_key_id or not self.secret_access_key:
+        if not self.credentials.get("AWS_ACCESS_KEY_ID") or not self.credentials.get("AWS_SECRET_ACCESS_KEY"):
             raise ValueError("AWS credentials are incomplete.")

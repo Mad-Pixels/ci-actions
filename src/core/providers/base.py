@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Tuple
 from abc import ABC, abstractmethod
 
 class BaseProvider(ABC):
@@ -21,13 +21,6 @@ class BaseProvider(ABC):
         Returns:
             Dict[str, str]: A dictionary of environment variables required 
                             for provider-specific authentication.
-        
-        Example:
-            For AWS credentials:
-            {
-                "AWS_ACCESS_KEY_ID": "example-key",
-                "AWS_SECRET_ACCESS_KEY": "example-secret"
-            }
         """
         pass
 
@@ -39,11 +32,6 @@ class BaseProvider(ABC):
         Returns:
             Dict[str, str]: A dictionary containing sensitive values, 
                             typically identical to or a subset of the environment variables.
-
-        Example:
-            {
-                "AWS_SECRET_ACCESS_KEY": "example-secret"
-            }
         """
         pass
 
@@ -52,15 +40,21 @@ class BaseProvider(ABC):
         """
         Validate the presence and correctness of credentials.
 
-        This method can raise exceptions if validation fails, ensuring that the provider's 
-        credentials meet the required conditions before use.
-
         Raises:
             ValueError: If required credentials are missing or invalid.
-
-        Example:
-            For AWS credentials, this could check that both keys are non-empty:
-            - AWS_ACCESS_KEY_ID
-            - AWS_SECRET_ACCESS_KEY
         """
         pass
+
+    def _generate_env_and_sensitive(self, credentials: Dict[str, str]) -> Tuple[Dict[str, str], Dict[str, str]]:
+        """
+        Generates environment and sensitive dictionaries based on provided credentials.
+
+        Args:
+            credentials (Dict[str, str]): A dictionary of credentials.
+
+        Returns:
+            Tuple[Dict[str, str], Dict[str, str]]: A tuple containing environment variables and sensitive data.
+        """
+        environment = credentials.copy()
+        sensitive = credentials.copy()
+        return environment, sensitive
