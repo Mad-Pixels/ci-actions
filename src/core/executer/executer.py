@@ -56,9 +56,9 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
                 else:
                     print(f"Command finished with status: {output.status}")
         """
-        self._logger.debug(f"Executing command (stream mode): {' '.join(cmd)}")
         env = env or {}
         self._validate_inputs(cmd, env, cwd)
+        self._logger.debug(f"Executing command (stream mode): {' '.join(cmd)}")
 
         stdout_lines: List[str] = []
         stderr_lines: List[str] = []
