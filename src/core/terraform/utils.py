@@ -3,7 +3,6 @@ from typing import Dict, Any
 import logging
 import json
 
-from core.executer.utils import str_to_dict
 from core.executer.masker import OutputMasker
 from .exceptions import TerraformExecutionError
 
