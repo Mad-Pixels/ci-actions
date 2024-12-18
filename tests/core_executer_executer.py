@@ -246,10 +246,8 @@ async def test_subprocess_executer_execution_result_with_masking(executer, mocke
 
     assert final_result is not None
     assert final_result.status == 0
-    # Проверяем оригинальные данные
     assert final_result.stdout == "Contains secret data\nRegular line\n"
     assert final_result.stderr == "Error with secret\n"
-    # Проверяем маскированные данные
     assert final_result.masked_stdout == "Contains ****** data\nRegular line\n"
     assert final_result.masked_stderr == "Error with ******\n"
 

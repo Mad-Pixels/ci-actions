@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from core.executer.validate import validate_command, validate_env, validate_cwd
+from core.executer.validater import validate_command, validate_env, validate_cwd
 from core.executer.exceptions import CommandValidationError
 
 

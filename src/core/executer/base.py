@@ -75,7 +75,7 @@ class BaseExecuter(ABC):
         Raises:
             CommandValidationError: If any input is invalid.
         """
-        from .validate import validate_command, validate_env, validate_cwd
+        from .validater import validate_command, validate_env, validate_cwd
 
         try:
             validate_command(cmd)
