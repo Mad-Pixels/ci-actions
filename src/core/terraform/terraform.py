@@ -1,15 +1,16 @@
-from typing import Dict, Optional, List, AsyncGenerator, Any
+from typing import Dict, Any, List, Optional, AsyncGenerator
 from pathlib import Path
 
 import logging
 
-from core.executer.executer import IsolateExecuter, ExecutionResult
+from core.executer.executer import IsolateExecuter
 from core.providers.base import BaseProvider
-from .types import TerraformAction
 from .exceptions import TerraformExecutionError
-from .utils import parse_terraform_output, get_default_masker
+from .types import TerraformAction
+from .utils import parse_terraform_output
 
 logger = logging.getLogger(__name__)
+
 
 class Terraform:
     """
@@ -64,6 +65,38 @@ class Terraform:
             for val in filter(None, sensitive.values()):
                 processor.sensitive(val)
                 
+    async def _run_command(
+        self,
+        action: TerraformAction,
+        cmd: List[str],
+        env: Optional[Dict[str, str]] = None
+    ) -> AsyncGenerator[str, None]:
+        """
+        Executes a Terraform command and yields output lines.
+
+        Args:
+            action (TerraformAction): The Terraform action being executed.
+            cmd (List[str]): The command and its arguments to execute.
+            env (Optional[Dict[str, str]]): Additional environment variables.
+
+        Yields:
+            str: Lines of output from the Terraform command.
+
+        Raises:
+            TerraformExecutionError: If the command execution fails.
+        """
+        try:
+            async for line in self._executer.execute_stream(
+                cmd,
+                env=env or self._env,
+                cwd=self._base_cwd,
+                mask=True
+            ):
+                yield line
+        except Exception as e:
+            logger.error(f"Error executing terraform {action.value} command: {e}", exc_info=True)
+            raise TerraformExecutionError(action.value, str(e))
+    
     async def init(self, args: Optional[List[str]] = None) -> AsyncGenerator[str, None]:
         """
         Runs the `terraform init` command and yields output lines as they become available.
@@ -81,12 +114,8 @@ class Terraform:
         if args:
             cmd.extend(args)
         
-        try:
-            async for line in self._executer.execute_stream(cmd, env=self._env, cwd=self._base_cwd, mask=True):
-                yield line
-        except Exception as e:
-            logger.error(f"Error executing terraform init command: {e}", exc_info=True)
-            raise TerraformExecutionError(TerraformAction.INIT.value, str(e))
+        async for line in self._run_command(TerraformAction.INIT, cmd):
+            yield line
     
     async def plan(
         self,
@@ -111,12 +140,8 @@ class Terraform:
             cmd.extend(args)
         env = self._prepare_tf_env(tf_vars)
 
-        try:
-            async for line in self._executer.execute_stream(cmd, env=env, cwd=self._base_cwd, mask=True):
-                yield line
-        except Exception as e:
-            logger.error(f"Error executing terraform plan command: {e}", exc_info=True)
-            raise TerraformExecutionError(TerraformAction.PLAN.value, str(e))
+        async for line in self._run_command(TerraformAction.PLAN, cmd, env=env):
+            yield line
     
     async def apply(
         self,
@@ -145,12 +170,8 @@ class Terraform:
             cmd.extend(args)
 
         env = self._prepare_tf_env(tf_vars)
-        try:
-            async for line in self._executer.execute_stream(cmd, env=env, cwd=self._base_cwd, mask=True):
-                yield line
-        except Exception as e:
-            logger.error(f"Error executing terraform apply command: {e}", exc_info=True)
-            raise TerraformExecutionError(TerraformAction.APPLY.value, str(e))
+        async for line in self._run_command(TerraformAction.APPLY, cmd, env=env):
+            yield line
     
     async def workspace(
         self,
@@ -174,12 +195,8 @@ class Terraform:
         if name:
             cmd.append(name)
 
-        try:
-            async for line in self._executer.execute_stream(cmd, env=self._env, cwd=self._base_cwd, mask=True):
-                yield line
-        except Exception as e:
-            logger.error(f"Error executing terraform workspace {action} command: {e}", exc_info=True)
-            raise TerraformExecutionError(TerraformAction.WORKSPACE.value, str(e))
+        async for line in self._run_command(TerraformAction.WORKSPACE, cmd):
+            yield line
     
     async def output(self) -> Dict[str, Any]:
         """
@@ -195,7 +212,7 @@ class Terraform:
 
         output_lines = []
         try:
-            async for line in self._executer.execute_stream(cmd, env=self._env, cwd=self._base_cwd, mask=True):
+            async for line in self._run_command(TerraformAction.OUTPUT, cmd):
                 output_lines.append(line)
         except Exception as e:
             logger.error(f"Error executing terraform output command: {e}", exc_info=True)
@@ -208,7 +225,7 @@ class Terraform:
         except Exception as e:
             logger.error(f"Error parsing terraform output: {e}", exc_info=True)
             raise TerraformExecutionError(TerraformAction.OUTPUT.value, f"Parsing error: {e}")
-
+    
     def _prepare_tf_env(self, tf_vars: Optional[Dict[str, str]]) -> Dict[str, str]:
         """
         Prepares the environment variables for Terraform commands based on tf_vars.
