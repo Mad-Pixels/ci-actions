@@ -5,8 +5,9 @@ import asyncio
 import os
 
 from .base import BaseExecuter, CommandExecuter, ExecutionResult
+from .exceptions import SubprocessError, CommandExecutionError
 from .utils import override_env, stream_lines
-from .exceptions import SubprocessError
+
 
 class SubprocessExecuter(BaseExecuter, CommandExecuter):
     """
@@ -90,7 +91,7 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
                         self._logger.error(f"Error processing stream: {content}", exc_info=True)
                         process.kill()
                         await process.wait()
-                        raise content
+                        raise CommandExecutionError(str(content), cmd=' '.join(cmd))
 
                     is_stdout = name == "STDOUT"
                     stream_type = "stdout" if is_stdout else "stderr"
@@ -112,11 +113,13 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
                     process.kill()
                     await process.wait()
                     raise
+                except CommandExecutionError:
+                    raise
                 except Exception as e:
                     self._logger.error(f"Subprocess execution error: {e}", exc_info=True)
                     process.kill()
                     await process.wait()
-                    raise
+                    raise CommandExecutionError(str(e), cmd=' '.join(cmd)) from e
 
                 if stdout_task.done() and stderr_task.done() and queue.empty():
                     break
@@ -135,12 +138,15 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
             process.kill()
             await process.wait()
             raise
+        except SubprocessError:
+            raise
+        except CommandExecutionError:
+            raise
         except Exception as e:
             self._logger.error(f"Subprocess execution error: {e}", exc_info=True)
             process.kill()
             await process.wait()
-            raise
-
+            raise CommandExecutionError(str(e), cmd=' '.join(cmd)) from e
 
 class IsolateExecuter(SubprocessExecuter):
     """

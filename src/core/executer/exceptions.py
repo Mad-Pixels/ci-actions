@@ -8,7 +8,6 @@ class CommandExecutionError(Exception):
 
 class SubprocessError(CommandExecutionError):
     """Subprocess execution error"""
-
     def __init__(self, cmd: str, returncode: int, stderr: str, stdout: str):
         self.returncode = returncode
         self.stderr = stderr
