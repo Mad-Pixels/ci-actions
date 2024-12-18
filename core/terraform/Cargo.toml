@@ -1,0 +1,9 @@
+[package]
+name = "terraform"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+executer = { path = "../executer" }
+processor = { path = "../processor" }
+provider = { path = "../provider" }

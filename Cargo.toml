@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "hello",
+    "core/processor",
+    "core/executer",
+    "core/provider",
+    "core/terraform"
+]
