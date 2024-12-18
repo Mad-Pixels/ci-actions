@@ -5,7 +5,7 @@ import asyncio
 import os
 
 from .base import BaseExecuter, CommandExecuter, ExecutionResult
-from .utils import override_env, stream_lines, read_stream_lines
+from .utils import override_env, read_stream_lines
 from .exceptions import SubprocessError
 
 class SubprocessExecuter(BaseExecuter, CommandExecuter):
@@ -72,8 +72,6 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
                 env={**os.environ, **env},
                 cwd=cwd
             )
-
-            # Создаем задачи для чтения обоих потоков
             stdout_task = asyncio.create_task(
                 read_stream_lines(process.stdout, self._logger, "STDOUT", self._processor)
             )
@@ -81,7 +79,6 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
                 read_stream_lines(process.stderr, self._logger, "STDERR", self._processor)
             )
 
-            # Ждем завершения любой из задач
             pending = {stdout_task, stderr_task}
             while pending:
                 done, pending = await asyncio.wait(
@@ -111,14 +108,11 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
                             
                     except Exception as e:
                         self._logger.error(f"Error processing stream: {e}", exc_info=True)
-                        # Отменяем оставшиеся задачи
                         for t in pending:
                             t.cancel()
                         raise
 
             status = await process.wait()
-            
-            # Возвращаем финальный результат
             yield ExecutionResult(
                 status=status,
                 stdout=''.join(stdout_lines),
