@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, AsyncGenerator
+from typing import Dict, Any, Optional, AsyncGenerator, List
 from contextlib import contextmanager
 
 import os
@@ -150,3 +150,37 @@ async def run_command_line_stream(
 
     if returncode != 0:
         logger.error(f"Command {cmd} failed with return code {returncode}: {stderr_decoded}")
+
+
+async def read_stream_lines(
+    stream: asyncio.StreamReader,
+    logger: logging.Logger,
+    name: str,
+    processor: Optional[OutputMasker] = None,
+) -> List[str]:
+    """
+    Читает строки из потока и возвращает их списком.
+    
+    Args:
+        stream: Stream для чтения
+        logger: Logger для логирования
+        name: Имя потока для логов (STDOUT/STDERR)
+        processor: Опциональный процессор для маскировки данных
+        
+    Returns:
+        List[str]: Список прочитанных строк
+    """
+    result = []
+    try:
+        while True:
+            line = await stream.readline()
+            if not line:
+                break
+            decoded = line.decode(errors="replace")
+            line_for_log = processor.mask(decoded) if processor else decoded
+            logger.debug(f"[{name}] {line_for_log.strip()}")
+            result.append(decoded)
+    except Exception as e:
+        logger.error(f"Error reading from {name} stream: {e}")
+        raise
+    return result

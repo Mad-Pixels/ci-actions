@@ -1,11 +1,11 @@
-from typing import Dict, Sequence, Optional, AsyncGenerator
+from typing import Dict, List, Sequence, Optional, Union, AsyncGenerator
 from pathlib import Path
 
 import asyncio
 import os
 
 from .base import BaseExecuter, CommandExecuter, ExecutionResult
-from .utils import override_env, stream_lines
+from .utils import override_env, stream_lines, read_stream_lines
 from .exceptions import SubprocessError
 
 class SubprocessExecuter(BaseExecuter, CommandExecuter):
@@ -24,63 +24,116 @@ class SubprocessExecuter(BaseExecuter, CommandExecuter):
         env: Optional[Dict[str, str]] = None,
         cwd: Optional[Path] = None,
         mask: bool = False,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[Union[str, ExecutionResult], None]:
         """
-        Execute a command and yield stdout lines as they become available.
+        Executes a command with real-time streaming output and returns final execution result.
+
+        This method streams command output line by line in real-time and provides a final
+        ExecutionResult object after command completion. The streaming allows processing
+        large outputs without memory issues while maintaining access to the complete
+        execution data.
 
         Args:
-            cmd (Sequence[str]): The command to execute as a sequence of strings.
-            env (Optional[Dict[str, str]]): Environment variables to pass.
-            cwd (Optional[Path]): Working directory for the command.
-            mask (bool): Whether to mask sensitive data in the output.
+            cmd: Command to execute as a sequence of strings.
+            env: Optional environment variables to pass to the command.
+            cwd: Optional working directory for command execution.
+            mask: Whether to mask sensitive data in the output.
 
         Yields:
-            str: Lines of the command's stdout in real-time.
+            During execution: Individual lines of stdout/stderr as strings, prefixed with 
+                            "[stdout] " or "[stderr] " accordingly
+            After completion: ExecutionResult containing complete stdout, stderr and execution status
 
         Raises:
-            SubprocessError: If the command fails with a non-zero exit code.
+            asyncio.CancelledError: If the command execution is cancelled.
+            Exception: For other execution errors (OS errors, etc).
+
+        Example:
+            async for output in executer.execute_stream(["ls", "-la"]):
+                if isinstance(output, str):
+                    print(f"Got line: {output}")
+                else:
+                    print(f"Command finished with status: {output.status}")
         """
         self._logger.debug(f"Executing command (stream mode): {' '.join(cmd)}")
         env = env or {}
         self._validate_inputs(cmd, env, cwd)
 
-        full_env = {**os.environ, **env}
-        self._logger.debug(f"PATH: {full_env.get('PATH')}")
+        stdout_lines: List[str] = []
+        stderr_lines: List[str] = []
+        masked_stdout_lines: List[str] = []
+        masked_stderr_lines: List[str] = []
 
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env=full_env,
+                env={**os.environ, **env},
                 cwd=cwd
             )
 
-            async for line in stream_lines(process.stdout, self._logger, "STDOUT", self._processor):
-                masked_line = self._processor.mask(line) if mask and self._processor else line
-                yield masked_line
+            # Создаем задачи для чтения обоих потоков
+            stdout_task = asyncio.create_task(
+                read_stream_lines(process.stdout, self._logger, "STDOUT", self._processor)
+            )
+            stderr_task = asyncio.create_task(
+                read_stream_lines(process.stderr, self._logger, "STDERR", self._processor)
+            )
 
-            returncode = await process.wait()
-            stderr = await process.stderr.read()
-            stderr_decoded = stderr.decode(errors="replace").strip()
+            # Ждем завершения любой из задач
+            pending = {stdout_task, stderr_task}
+            while pending:
+                done, pending = await asyncio.wait(
+                    pending,
+                    return_when=asyncio.FIRST_COMPLETED
+                )
+                
+                for task in done:
+                    try:
+                        lines = await task
+                        is_stdout = task == stdout_task
+                        stream_type = "stdout" if is_stdout else "stderr"
+                        
+                        for line in lines:
+                            masked_line = self._processor.mask(line) if mask and self._processor else line
+                            
+                            if is_stdout:
+                                stdout_lines.append(line)
+                                if mask:
+                                    masked_stdout_lines.append(masked_line)
+                            else:
+                                stderr_lines.append(line)
+                                if mask:
+                                    masked_stderr_lines.append(masked_line)
+                            
+                            yield f"[{stream_type}] {masked_line if mask else line}"
+                            
+                    except Exception as e:
+                        self._logger.error(f"Error processing stream: {e}", exc_info=True)
+                        # Отменяем оставшиеся задачи
+                        for t in pending:
+                            t.cancel()
+                        raise
 
-            if returncode != 0:
-                masked_stderr = self._processor.mask(stderr_decoded) if mask and self._processor else stderr_decoded
-                self._logger.error(
-                    f"Command '{' '.join(cmd)}' failed with return code {returncode}: {masked_stderr}"
-                )
-                raise SubprocessError(
-                    cmd=' '.join(cmd),
-                    returncode=returncode,
-                    stderr=masked_stderr,
-                    stdout=""
-                )
+            status = await process.wait()
+            
+            # Возвращаем финальный результат
+            yield ExecutionResult(
+                status=status,
+                stdout=''.join(stdout_lines),
+                stderr=''.join(stderr_lines),
+                masked_stdout=''.join(masked_stdout_lines) if mask else None,
+                masked_stderr=''.join(masked_stderr_lines) if mask else None
+            )
+
         except asyncio.CancelledError:
             self._logger.warning("Command execution was cancelled")
             raise
         except Exception as e:
             self._logger.error(f"Subprocess execution error: {e}", exc_info=True)
             raise
+
 
 class IsolateExecuter(SubprocessExecuter):
     """
@@ -97,7 +150,7 @@ class IsolateExecuter(SubprocessExecuter):
         env: Optional[Dict[str, str]] = None,
         cwd: Optional[Path] = None,
         mask: bool = False,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[Union[str, ExecutionResult], None]:
         """
         Execute a command with an isolated environment and yield stdout lines as they become available.
 
@@ -108,7 +161,8 @@ class IsolateExecuter(SubprocessExecuter):
             mask (bool): Whether to mask sensitive data in the output.
 
         Yields:
-            str: Lines of the command's stdout in real-time.
+            Union[str, ExecutionResult]: Either a line of output (prefixed with stream type)
+                                      or final execution result.
 
         Raises:
             SubprocessError: If the command fails with a non-zero exit code.
