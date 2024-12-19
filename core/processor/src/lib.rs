@@ -4,10 +4,12 @@ use masker_regex::MaskerRegex;
 pub mod masker_regex;
 pub mod masker_equal;
 
+
 pub trait Masker {
     fn process(&self, input: &str) -> String;
 }
 
+#[derive(Clone)]
 pub enum Item {
     Regex(MaskerRegex),
     Equal(MaskerEqual),
@@ -22,6 +24,7 @@ impl Item {
     }
 }
 
+#[derive(Clone)]
 pub struct Collection {
     maskers: Vec<Item>,
 }

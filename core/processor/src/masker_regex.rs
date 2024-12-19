@@ -1,6 +1,7 @@
 use regex::Regex;
 use crate::Masker;
 
+#[derive(Clone)]
 pub struct MaskerRegex {
     patterns: Vec<Regex>,
     mask: String,

@@ -1,5 +1,6 @@
 use crate::Masker;
 
+#[derive(Clone)]
 pub struct MaskerEqual {
     substring: Vec<String>,
     mask: String,
