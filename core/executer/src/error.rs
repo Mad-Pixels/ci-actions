@@ -8,6 +8,9 @@ pub enum ExecuterError {
     #[error("Command execution error: {0}")]
     ExecutionError(String),
 
+    #[error("Stream error: {0}")]
+    StreamError(String),
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 
