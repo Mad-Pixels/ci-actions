@@ -1,7 +1,8 @@
-use serde::{Serialize, Deserialize};
-use crate::error::ExecuterError;
-use stf::fmt;
+use std::path::PathBuf;
 
-pub type Output<T> = Result<T, ExecuterError>;
-
-
+#[derive(Debug, Clone)]
+pub enum Target {
+    Stdout,
+    Stderr,
+    File(PathBuf),
+}
