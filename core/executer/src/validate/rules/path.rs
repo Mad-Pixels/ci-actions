@@ -1,4 +1,5 @@
-use crate::validate::rule::{ValidationRule, ValidationContext};
+use crate::validate::rule::ValidationContext;
+use crate::validate::traits::ValidationRule;
 use crate::error::ExecuterError;
 
 pub struct PathRule;

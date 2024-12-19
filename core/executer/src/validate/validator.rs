@@ -1,4 +1,5 @@
-use super::rule::{ValidationRule, ValidationContext};
+use super::rule::ValidationContext;
+use super::traits::ValidationRule;
 use crate::error::ExecuterResult;
 
 pub struct Validator {

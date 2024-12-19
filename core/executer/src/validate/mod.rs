@@ -1,9 +1,11 @@
 mod validator;
+mod traits;
 mod rules;
 mod rule;
 
-pub use rule::{ValidationRule, ValidationContext};
 pub use rules::{CmdRule, EnvRule, PathRule};
+pub use rule::ValidationContext;
+pub use traits::ValidationRule;
 pub use validator::Validator;
 
 #[cfg(test)]
@@ -77,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_validation_order() {
-        use rule::ValidationRule;
+        use traits::ValidationRule;
 
         struct TestRule {
             name: &'static str,
