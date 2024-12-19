@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use slog::{Logger, Drain, o};
-use processor::{Collection, Item, masker_regex::MaskerRegex};
+use processor::{Collection, Item, maskers::regex::MaskerRegex};
 use executer::{SubprocessExecuter, IsolateExecuter, CommandExecuter};
 use futures::StreamExt;
 
@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             r"token=\w+",               // Токены
         ],
         "****"
-    );
+    )?;  // Добавляем обработку ошибок, так как new теперь возвращает Result
     let collection = Collection::new(vec![Item::Regex(masker)]);
 
     // Пример 1: Простой SubprocessExecuter
@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Выполняем команду в изолированном окружении
     let mut stream = isolated_executer.execute_stream(
-        vec!["sh".to_string(), "-c".to_string(), "echo $SECRET_TOKEN".to_string()],
+        vec!["sh".to_string(), "-c".to_string(), "echo \"$SECRET_TOKEN\"".to_string()],
         None,
         None,
         true, // Включаем маскирование

@@ -63,7 +63,7 @@ impl CommandExecuter for IsolateExecuter {
 mod tests {
     use super::*;
     use futures::StreamExt;
-    use processor::{Collection, Item, masker_regex::MaskerRegex};
+    use processor::{Collection, Item, maskers::regex::MaskerRegex};
     use slog::{Logger, Drain, o};
 
     fn setup_logger() -> Logger {

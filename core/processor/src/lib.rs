@@ -1,99 +1,48 @@
-use masker_equal::MaskerEqual;
-use masker_regex::MaskerRegex;
+pub mod maskers;
 
-pub mod masker_regex;
-pub mod masker_equal;
+mod collection;
+mod traits;
+mod error;
+mod item;
 
-
-pub trait Masker {
-    fn process(&self, input: &str) -> String;
-}
-
-#[derive(Clone)]
-pub enum Item {
-    Regex(MaskerRegex),
-    Equal(MaskerEqual),
-}
-
-impl Item {
-    pub fn process(&self, input: &str) -> String {
-        match self {
-            Item::Regex(masker) => masker.process(input),
-            Item::Equal(masker) => masker.process(input),
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct Collection {
-    maskers: Vec<Item>,
-}
-
-impl Collection {
-    pub fn new(maskers: Vec<Item>) -> Self {
-        Self { maskers }
-    }
-    pub fn process(&self, input: &str) -> String {
-        self.maskers.iter().fold(input.to_string(), |acc, masker| {
-            masker.process(&acc)
-        })
-    }
-}
+pub use maskers::{equal::MaskerEqual, regex::MaskerRegex};
+pub use collection::Collection;
+pub use error::ProcessorError;
+pub use traits::Processor;
+pub use item::Item;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::masker_equal::MaskerEqual;
-    use crate::masker_regex::MaskerRegex;
 
     #[test]
-    fn test_masker_regexp() {
-        let masker = MaskerRegex::new(vec![r"\d{4}", r"secret"], "****");
-        let input = "My password is 1234 and my secret code is 5678";
-        let output = masker.process(input);
-        assert_eq!(output, "My password is **** and my **** code is ****");
-    }
+    fn test_processor_chain() {
+        let regexp_processor = MaskerRegex::new(vec![r"\d{4}", r"secret"], "****").unwrap();
+        let equal_processor = MaskerEqual::new(vec!["password", "key"], "***");
 
-    #[test]
-    fn test_masker_equal() {
-        let masker = MaskerEqual::new(vec!["password", "key"], "***");
-        let input = "My password is here and my key is safe";
-        let output = masker.process(input);
-        assert_eq!(output, "My *** is here and my *** is safe");
-    }
-
-    #[test]
-    fn test_masker_manager() {
-        let regexp_masker = MaskerRegex::new(vec![r"\d{4}", r"secret"], "****");
-        let equal_masker = MaskerEqual::new(vec!["password", "key"], "***");
-
-        let maskers = vec![
-            Item::Regex(regexp_masker),
-            Item::Equal(equal_masker),
+        let processors = vec![
+            Item::Regex(regexp_processor),
+            Item::Equal(equal_processor),
         ];
-
-        let manager = Collection::new(maskers);
-
+        let collection = Collection::new(processors);
         let input = "My password is 1234 and my key is secret";
-        let output = manager.process(input);
+        let output = collection.process(input);
 
         assert_eq!(output, "My *** is **** and my *** is ****");
     }
 
     #[test]
-    fn test_manager_order_of_operations() {
-        let first_masker = MaskerEqual::new(vec!["first"], "1st");
-        let second_masker = MaskerEqual::new(vec!["second"], "2nd");
+    fn test_processing_order() {
+        let first_processor = MaskerEqual::new(vec!["first"], "1st");
+        let second_processor = MaskerEqual::new(vec!["second"], "2nd");
 
-        let maskers = vec![
-            Item::Equal(first_masker),
-            Item::Equal(second_masker),
+        let processors = vec![
+            Item::Equal(first_processor),
+            Item::Equal(second_processor),
         ];
-
-        let manager = Collection::new(maskers);
-
+        let collection = Collection::new(processors);
         let input = "This is the first and the second example.";
-        let output = manager.process(input);
+        let output = collection.process(input);
 
         assert_eq!(output, "This is the 1st and the 2nd example.");
     }
