@@ -7,7 +7,8 @@ use processor::{Collection, Processor};
 use writer::Writer;
 use slog::Logger;
 
-struct Output {
+#[derive(Clone)]
+pub struct Output {
     processor: Collection,
     output_target: Target,
     error_target: Target,

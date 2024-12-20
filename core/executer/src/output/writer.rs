@@ -2,6 +2,7 @@ use super::types::Target;
 use std::fs::OpenOptions;
 use std::io::Write;
 
+#[derive(Clone)]
 pub(crate) struct Writer;
 
 impl Writer {
