@@ -83,16 +83,15 @@ impl Subprocess {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::output::Target;
+    
     use processor::{Collection, Item, maskers::regex::MaskerRegex};
+    use crate::validate::Validator;
+    use std::collections::HashMap;
     use slog::{Logger, Drain, o};
+    use crate::output::Target;
+    use std::path::PathBuf;
     use tempfile::tempdir;
     use std::fs;
-    use std::collections::HashMap;
-    use std::path::PathBuf;
-
-    // Предполагается, что Validator имеет метод default
-    use crate::validate::Validator;
 
     fn setup_logger() -> Logger {
         let decorator = slog_term::TermDecorator::new().build();
@@ -252,7 +251,6 @@ mod tests {
         let validator = Validator::default();
         let subprocess = Subprocess::new(output, validator);
 
-        // Успешное выполнение
         #[cfg(unix)]
         let cmd_success = "true";
         #[cfg(windows)]
@@ -269,7 +267,6 @@ mod tests {
             .expect("Failed to execute success command");
         assert_eq!(status, 0);
 
-        // Ошибка выполнения
         #[cfg(unix)]
         let cmd_error = "exit 1";
         #[cfg(windows)]
@@ -356,7 +353,6 @@ mod tests {
         assert_eq!(status, 0);
         let content = fs::read_to_string(&output_path).expect("Failed to read output file");
 
-        // Проверяем, что все 100 паролей замаскированы
         assert_eq!(content.matches("****").count(), 100);
     }
 
@@ -462,14 +458,8 @@ mod tests {
         if output_path.exists() {
             let content = fs::read_to_string(&output_path).expect("Failed to read output file");
             assert!(content.trim().is_empty());
-        } else {
-            // Если файл не существует, убедитесь, что выполнение прошло успешно
-            // Это зависит от реализации Output
-            // Можно добавить дополнительные проверки при необходимости
-        }
+        } 
     }
-
-    // Дополнительные тесты, связанные с таймаутом и рабочей директорией
 
     #[tokio::test]
     async fn test_command_timeout() {
@@ -491,11 +481,11 @@ mod tests {
         #[cfg(windows)]
         let cmd = "cmd /C \"timeout /t 5 /nobreak > nul\"";
 
-        let mut context = Context::new(
+        let context = Context::new(
             build_command(cmd),
             HashMap::new(),
             None,
-        ).with_timeout(1); // Устанавливаем таймаут в 1 секунду
+        ).with_timeout(1);
 
         let result = subprocess.execute(context)
             .await;
@@ -513,13 +503,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_working_directory() {
-        // Создаём временную директорию
         let temp_dir = tempdir().expect("Failed to create temp dir");
         let nested_dir = temp_dir.path().join("nested");
         fs::create_dir(&nested_dir).expect("Failed to create nested directory");
         let output_path = temp_dir.path().join("output.log");
     
-        // Инициализируем Output
         let output = Output::new(
             create_processor(),
             Target::File(output_path.clone()),
@@ -527,39 +515,31 @@ mod tests {
             setup_logger(),
         );
     
-        // Создаём Validator и Subprocess
         let validator = Validator::default();
         let subprocess = Subprocess::new(output, validator);
     
-        // Определяем команду для разных платформ
         #[cfg(unix)]
         let cmd = "pwd";
         #[cfg(windows)]
         let cmd = "cmd /C \"cd\"";
     
-        // Создаём контекст выполнения команды с установленной рабочей директорией
         let context = Context::new(
             build_command(cmd),
             HashMap::new(),
             Some(nested_dir.clone()),
         );
     
-        // Выполняем команду
         let status = subprocess.execute(context)
             .await
             .expect("Failed to execute command with working directory");
     
-        // Проверяем код возврата
         assert_eq!(status, 0);
     
-        // Читаем содержимое файла вывода
         let content = fs::read_to_string(&output_path).expect("Failed to read output file");
     
-        // Получаем канонические пути для сравнения
         let expected = nested_dir.canonicalize().expect("Failed to canonicalize nested_dir");
         let actual = PathBuf::from(content.trim()).canonicalize().expect("Failed to canonicalize actual path");
     
-        // Сравниваем канонические пути
         assert_eq!(actual, expected, "The working directory does not match the expected path");
     }
     
