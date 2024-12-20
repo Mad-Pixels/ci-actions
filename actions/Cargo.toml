@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = [
+    "hello",
+    "pkgs/core/processor",
+    "pkgs/core/executer",
+    "pkgs/core/provider",
+    "pkgs/core/terraform"
+]

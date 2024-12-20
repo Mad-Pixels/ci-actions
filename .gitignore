@@ -1,12 +1,9 @@
-# Скомпилированные бинарники и артефакты сборки
-/target/
+/actions/target/
 
-# Файлы и папки, созданные Cargo
 **/*.rs.bk
 /.cargo/
-/Cargo.lock
+/actions/Cargo.lock
 
-# Лог-файлы и временные файлы
 *.log
 *.tmp
 *.bak
@@ -15,21 +12,17 @@
 *.swn
 *.DS_Store
 
-# IDE/редакторы
 .idea/
 .vscode/
 *.iml
 
-# Системные файлы
 Thumbs.db
 *.~undo-tree~
 *.orig
 
-# Утилиты тестирования и CI
 /coverage/
 *.profraw
 
-# Утилиты сборки и временные файлы
 /benchmarks/
 /dist/
 *.crate

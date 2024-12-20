@@ -13,8 +13,8 @@ slog-term = "2.9"
 slog-async = "2.7"
 thiserror = "1.0"
 async-stream = "0.3"
-processor = { path = "../core/processor" }
-executer = { path = "../core/executer"}
+processor = { path = "../pkgs/core/processor" }
+executer = { path = "../pkgs/core/executer"}
 
 
 
