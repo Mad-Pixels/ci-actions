@@ -1,6 +1,6 @@
-use crate::validate::rule::ValidationContext;
 use crate::validate::traits::ValidationRule;
 use crate::error::ExecuterError;
+use crate::context::Context;
 
 pub struct EnvRule;
 
@@ -11,7 +11,7 @@ impl EnvRule {
 }
 
 impl ValidationRule for EnvRule {
-    fn validate(&self, context: &ValidationContext) -> Result<(), ExecuterError> {
+    fn validate(&self, context: &Context) -> Result<(), ExecuterError> {
         for (key, value) in &context.env {
             if key.trim().is_empty() {
                 return Err(ExecuterError::ValidationError(
@@ -37,8 +37,8 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
 
-    fn create_context(env: HashMap<String, String>) -> ValidationContext {
-        ValidationContext::new(vec!["test".to_string()], env, None)
+    fn create_context(env: HashMap<String, String>) -> Context {
+        Context::new(vec!["test".to_string()], env, None)
     }
 
     #[test]

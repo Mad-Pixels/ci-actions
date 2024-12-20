@@ -1,6 +1,6 @@
-use crate::validate::rule::ValidationContext;
 use crate::validate::traits::ValidationRule;
 use crate::error::ExecuterError;
+use crate::context::Context;
 
 pub struct CmdRule {
     forbidden_chars: Vec<char>,
@@ -21,7 +21,7 @@ impl CmdRule {
 }
 
 impl ValidationRule for CmdRule {
-    fn validate(&self, context: &ValidationContext) -> Result<(), ExecuterError> {
+    fn validate(&self, context: &Context) -> Result<(), ExecuterError> {
         if context.command.is_empty() {
             return Err(ExecuterError::ValidationError("Empty command sequence".to_string()));
         }
@@ -48,8 +48,8 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
 
-    fn create_context(cmd: Vec<String>) -> ValidationContext {
-        ValidationContext::new(cmd, HashMap::new(), None)
+    fn create_context(cmd: Vec<String>) -> Context {
+        Context::new(cmd, HashMap::new(), None)
     }
 
     #[test]

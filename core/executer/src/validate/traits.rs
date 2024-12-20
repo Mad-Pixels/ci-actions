@@ -1,8 +1,8 @@
 use crate::error::ExecuterResult;
-use super::ValidationContext;
+use crate::context::Context;
 
 pub trait ValidationRule: Send + Sync {
-    fn validate(&self, context: &ValidationContext) -> ExecuterResult<()>;
+    fn validate(&self, context: &Context) -> ExecuterResult<()>;
 
     fn name(&self) -> &'static str;
 

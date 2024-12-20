@@ -1,6 +1,6 @@
-use super::rule::ValidationContext;
 use super::traits::ValidationRule;
 use crate::error::ExecuterResult;
+use crate::context::Context;
 
 pub struct Validator {
     rules: Vec<Box<dyn ValidationRule>>,
@@ -16,7 +16,7 @@ impl Validator {
         Self::new(super::rules::standard_rules())
     }
 
-    pub fn validate(&self, context: &ValidationContext) -> ExecuterResult<()> {
+    pub fn validate(&self, context: &Context) -> ExecuterResult<()> {
         for rule in self.rules.iter() {
             rule.validate(context)?;
         }

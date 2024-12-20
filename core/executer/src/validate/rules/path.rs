@@ -1,6 +1,6 @@
-use crate::validate::rule::ValidationContext;
 use crate::validate::traits::ValidationRule;
 use crate::error::ExecuterError;
+use crate::context::Context;
 
 pub struct PathRule;
 
@@ -11,7 +11,7 @@ impl PathRule {
 }
 
 impl ValidationRule for PathRule {
-    fn validate(&self, context: &ValidationContext) -> Result<(), ExecuterError> {
+    fn validate(&self, context: &Context) -> Result<(), ExecuterError> {
         if let Some(path) = &context.cwd {
             if !path.exists() {
                 return Err(ExecuterError::ValidationError(
@@ -38,8 +38,8 @@ mod tests {
     use std::collections::HashMap;
     use std::path::PathBuf;
 
-    fn create_context(cwd: Option<PathBuf>) -> ValidationContext {
-        ValidationContext::new(vec!["test".to_string()], HashMap::new(), cwd)
+    fn create_context(cwd: Option<PathBuf>) -> Context {
+        Context::new(vec!["test".to_string()], HashMap::new(), cwd)
     }
 
     #[test]

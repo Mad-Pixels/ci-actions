@@ -1,10 +1,8 @@
 mod validator;
 mod traits;
 mod rules;
-mod rule;
 
 pub use rules::{CmdRule, EnvRule, PathRule};
-pub use rule::ValidationContext;
 pub use traits::ValidationRule;
 pub use validator::Validator;
 
@@ -13,17 +11,18 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
     use std::path::PathBuf;
+    use crate::context::Context;
 
-    fn create_cmd_context(cmd: Vec<String>) -> ValidationContext {
-        ValidationContext::new(cmd, HashMap::new(), None)
+    fn create_cmd_context(cmd: Vec<String>) -> Context {
+        Context::new(cmd, HashMap::new(), None)
     }
 
-    fn create_env_context(env: HashMap<String, String>) -> ValidationContext {
-        ValidationContext::new(vec!["test".to_string()], env, None)
+    fn create_env_context(env: HashMap<String, String>) -> Context {
+        Context::new(vec!["test".to_string()], env, None)
     }
 
-    fn create_path_context(path: Option<PathBuf>) -> ValidationContext {
-        ValidationContext::new(vec!["test".to_string()], HashMap::new(), path)
+    fn create_path_context(path: Option<PathBuf>) -> Context {
+        Context::new(vec!["test".to_string()], HashMap::new(), path)
     }
 
     #[test]
@@ -88,7 +87,7 @@ mod tests {
         }
 
         impl ValidationRule for TestRule {
-            fn validate(&self, _: &ValidationContext) -> crate::error::ExecuterResult<()> {
+            fn validate(&self, _: &Context) -> crate::error::ExecuterResult<()> {
                 if self.should_fail {
                     Err(crate::error::ExecuterError::ValidationError(
                         "Test failure".to_string(),
@@ -120,7 +119,7 @@ mod tests {
             }) as Box<dyn ValidationRule>,
         ];
         let validator = Validator::new(rules);
-        let context = ValidationContext::new(vec![], HashMap::new(), None);
+        let context = Context::new(vec![], HashMap::new(), None);
         
         assert!(validator.validate(&context).is_err());
     }
@@ -142,7 +141,7 @@ mod tests {
         let mut env = HashMap::new();
         env.insert("TEST_VAR".to_string(), "test_value".to_string());
 
-        let context = ValidationContext::new(
+        let context = Context::new(
             vec!["ls".to_string(), "-l".to_string()],
             env,
             Some(PathBuf::from(".")),
