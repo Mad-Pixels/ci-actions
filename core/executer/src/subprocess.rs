@@ -34,6 +34,9 @@ impl Subprocess {
         if let Some(path) = &context.cwd {
             command.current_dir(path);
         }
+        if !context.env.is_empty() {
+            command.envs(&context.env);
+        }
         let mut child = command.spawn()?;
 
         let stdout = child.stdout.take()
@@ -541,6 +544,43 @@ mod tests {
         let actual = PathBuf::from(content.trim()).canonicalize().expect("Failed to canonicalize actual path");
     
         assert_eq!(actual, expected, "The working directory does not match the expected path");
+    }
+    
+
+    #[tokio::test]
+    async fn test_clean_env() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let output_path = temp_dir.path().join("output.log");
+    
+        let output = Output::new(
+            create_processor(),
+            Target::File(output_path.clone()),
+            Target::File(output_path.clone()),
+            setup_logger(),
+        );
+    
+        let validator = Validator::default();
+        let subprocess = Subprocess::new(output, validator);
+    
+        let env = HashMap::new();
+    
+        let cmd = if cfg!(unix) {
+            "env"
+        } else {
+            "set"
+        };
+    
+        let context = Context::new(
+            build_command(cmd),
+            env,
+            None,
+        );
+    
+        let status = subprocess.execute(context).await.unwrap();
+        assert_eq!(status, 0);
+    
+        let content = fs::read_to_string(output_path).unwrap();
+        assert!(!content.contains("TEST_VAR"));
     }
     
 }
