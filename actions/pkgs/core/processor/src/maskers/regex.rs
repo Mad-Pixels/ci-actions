@@ -1,4 +1,4 @@
-use crate::error::ProcessorError;
+use crate::error::{ProcessorError, ProcessorResult};
 use crate::Processor;
 use regex::Regex;
 
@@ -41,7 +41,7 @@ impl MaskerRegex {
     ///
     /// assert_eq!(output, "My password is **** and my **** code is ****");
     /// ```
-    pub fn new<T: AsRef<str>>(patterns: Vec<T>, mask: &str) -> Result<Self, ProcessorError> {
+    pub fn new<T: AsRef<str>>(patterns: Vec<T>, mask: &str) -> ProcessorResult<Self> {
         let patterns = patterns
             .iter()
             .map(|p| Regex::new(p.as_ref()).map_err(|e| ProcessorError::RegexError(e.to_string())))
