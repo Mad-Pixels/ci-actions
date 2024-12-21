@@ -1,7 +1,7 @@
 use crate::command::{TerraformCommand, WorkspaceOperation};
 use crate::error::{TerraformError, TerraformResult};
 use executer::{Context, Output, Subprocess, Target, Validator};
-use processor::Collection;
+use processor::MaskerCollection;
 use std::path::PathBuf;
 
 pub struct TerraformExecutor {
@@ -10,7 +10,7 @@ pub struct TerraformExecutor {
 }
 
 impl TerraformExecutor {
-    pub fn new(processor: Collection, terraform_path: PathBuf) -> Self {
+    pub fn new(processor: MaskerCollection, terraform_path: PathBuf) -> Self {
         let output = Output::new(processor, Target::Stdout, Target::Stderr);
 
         let validator = Validator::default();

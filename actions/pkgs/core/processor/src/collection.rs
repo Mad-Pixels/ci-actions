@@ -1,19 +1,19 @@
-use crate::{Item, Processor};
+use crate::{MaskerItem, Processor};
 
 /// Collection of processors that are applied sequentially
 #[derive(Clone)]
-pub struct Collection {
-    processors: Vec<Item>,
+pub struct MaskerCollection {
+    processors: Vec<MaskerItem>,
 }
 
-impl Collection {
+impl MaskerCollection {
     /// Create new collection of processors
-    pub fn new(processors: Vec<Item>) -> Self {
+    pub fn new(processors: Vec<MaskerItem>) -> Self {
         Self { processors }
     }
 }
 
-impl Processor for Collection {
+impl Processor for MaskerCollection {
     fn process(&self, input: &str) -> String {
         self.processors
             .iter()

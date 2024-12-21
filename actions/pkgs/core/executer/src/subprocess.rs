@@ -37,11 +37,11 @@ impl Subprocess {
     ///
     /// ```rust
     /// use executer::{Output, Subprocess, Target, Validator};
-    /// use processor::{Collection, Item};
+    /// use processor::{MaskerCollection, MaskerItem};
     /// use processor::maskers::MaskerRegex;
     ///
-    /// let processor = Collection::new(vec![
-    ///     Item::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
+    /// let processor = MaskerCollection::new(vec![
+    ///     MaskerItem::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
     /// ]);
     /// let output = Output::new(processor, Target::Stdout, Target::Stderr);
     /// let validator = Validator::default();
@@ -76,15 +76,15 @@ impl Subprocess {
     ///
     /// ```rust,no_run
     /// use executer::{Context, Output, Subprocess, Target, Validator};
-    /// use processor::{Collection, Item};
+    /// use processor::{MaskerCollection, MaskerItem};
     /// use processor::MaskerRegex;
     /// use std::collections::HashMap;
     ///
     /// #[tokio::main]
     /// async fn main() {
     ///     // Create a processor with maskers for sensitive data
-    ///     let processor = Collection::new(vec![
-    ///         Item::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
+    ///     let processor = MaskerCollection::new(vec![
+    ///         MaskerItem::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
     ///     ]);
     ///
     ///     // Create a subprocess instance
@@ -182,14 +182,14 @@ mod tests {
 
     use crate::output::Target;
     use crate::validate::Validator;
-    use processor::{maskers::MaskerRegex, Collection, Item};
+    use processor::{maskers::MaskerRegex, MaskerCollection, MaskerItem};
     use std::{collections::HashMap, path::PathBuf, fs};
     use tempfile::tempdir;
 
-    fn create_processor() -> Collection {
+    fn create_processor() -> MaskerCollection {
         let masker =
             MaskerRegex::new(vec![r"password=\w+", r"secret=\w+", r"token=\w+"], "****").unwrap();
-        Collection::new(vec![Item::Regex(masker)])
+        MaskerCollection::new(vec![MaskerItem::Regex(masker)])
     }
 
     #[cfg(unix)]

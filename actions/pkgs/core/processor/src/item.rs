@@ -3,18 +3,18 @@ use crate::Processor;
 
 /// Available processor implementations
 #[derive(Clone)]
-pub enum Item {
+pub enum MaskerItem {
     /// Regular expression based processor
     Regex(MaskerRegex),
     /// Exact string match processor
     Equal(MaskerEqual),
 }
 
-impl Processor for Item {
+impl Processor for MaskerItem {
     fn process(&self, input: &str) -> String {
         match self {
-            Item::Regex(processor) => processor.process(input),
-            Item::Equal(processor) => processor.process(input),
+            MaskerItem::Regex(processor) => processor.process(input),
+            MaskerItem::Equal(processor) => processor.process(input),
         }
     }
 }
