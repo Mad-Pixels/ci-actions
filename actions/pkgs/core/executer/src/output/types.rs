@@ -17,7 +17,7 @@ impl Target {
     /// # Example
     ///
     /// ```rust
-    /// use executer::output::Target;
+    /// use executer::Target;
     ///
     /// let target = Target::stdout();
     /// ```
@@ -30,7 +30,7 @@ impl Target {
     /// # Example
     ///
     /// ```rust
-    /// use executer::output::Target;
+    /// use executer::Target;
     ///
     /// let target = Target::stderr();
     /// ```
@@ -47,7 +47,7 @@ impl Target {
     /// # Example
     ///
     /// ```rust
-    /// use executer::output::Target;
+    /// use executer::Target;
     /// use std::path::PathBuf;
     ///
     /// let path = PathBuf::from("log.txt");

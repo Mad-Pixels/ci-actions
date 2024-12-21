@@ -1,6 +1,6 @@
-pub mod validator;
-pub mod traits;
 pub mod rules;
+pub mod traits;
+pub mod validator;
 
 pub use validator::Validator;
 
@@ -8,7 +8,7 @@ pub use validator::Validator;
 mod tests {
     use super::*;
     use crate::context::Context;
-    
+
     use std::collections::HashMap;
     use std::path::PathBuf;
 

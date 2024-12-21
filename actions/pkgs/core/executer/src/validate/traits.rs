@@ -1,4 +1,4 @@
-use crate::{ExecuterResult, Context};
+use crate::{Context, ExecuterResult};
 
 /// A trait that defines a validation rule for a command context.
 ///

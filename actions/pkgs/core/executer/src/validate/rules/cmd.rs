@@ -14,7 +14,7 @@ impl CmdRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::CmdRule;
+    /// use executer::rules::CmdRule;
     ///
     /// let rule = CmdRule::new();
     /// ```
@@ -33,7 +33,7 @@ impl CmdRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::CmdRule;
+    /// use executer::rules::CmdRule;
     ///
     /// let rule = CmdRule::with_forbidden_chars(vec!['$', '#']);
     /// ```
@@ -59,7 +59,7 @@ impl ValidationRule for CmdRule {
     ///
     /// ```rust
     /// use executer::{ValidationRule, Context, ExecuterError};
-    /// use executer::validate::rules::CmdRule;
+    /// use executer::rules::CmdRule;
     /// use std::collections::HashMap;
     ///
     /// let rule = CmdRule::new();
@@ -94,7 +94,7 @@ impl ValidationRule for CmdRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::CmdRule;
+    /// use executer::rules::CmdRule;
     /// use executer::ValidationRule;
     ///
     /// let rule = CmdRule::new();
@@ -111,7 +111,7 @@ impl ValidationRule for CmdRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::CmdRule;
+    /// use executer::rules::CmdRule;
     /// use executer::ValidationRule;
     ///
     /// let rule = CmdRule::new();

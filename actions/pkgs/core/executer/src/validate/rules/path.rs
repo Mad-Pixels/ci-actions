@@ -11,8 +11,8 @@ impl PathRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::PathRule;
-    
+    /// use executer::rules::PathRule;
+
     /// let rule = PathRule::new();
     /// ```
     pub fn new() -> Self {
@@ -37,10 +37,10 @@ impl ValidationRule for PathRule {
     ///
     /// ```rust
     /// use executer::{ValidationRule, Context, ExecuterError};
-    /// use executer::validate::rules::PathRule;
+    /// use executer::rules::PathRule;
     /// use std::collections::HashMap;
     /// use std::path::PathBuf;
-    /// 
+    ///
     /// let rule = PathRule::new();
     ///
     /// let valid_context = Context::new(vec!["echo".to_string()], HashMap::new(), Some(PathBuf::from(".")));
@@ -72,7 +72,7 @@ impl ValidationRule for PathRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::PathRule;
+    /// use executer::rules::PathRule;
     /// use executer::ValidationRule;
     ///
     /// let rule = PathRule::new();
@@ -89,7 +89,7 @@ impl ValidationRule for PathRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::PathRule;
+    /// use executer::rules::PathRule;
     /// use executer::ValidationRule;
     ///
     /// let rule = PathRule::new();

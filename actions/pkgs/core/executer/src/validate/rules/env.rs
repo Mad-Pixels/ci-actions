@@ -11,7 +11,7 @@ impl EnvRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::EnvRule;
+    /// use executer::rules::EnvRule;
     ///
     /// let rule = EnvRule::new();
     /// ```
@@ -37,9 +37,9 @@ impl ValidationRule for EnvRule {
     ///
     /// ```rust
     /// use executer::{ValidationRule, Context, ExecuterError};
-    /// use executer::validate::rules::EnvRule;
+    /// use executer::rules::EnvRule;
     /// use std::collections::HashMap;
-    /// 
+    ///
     /// let rule = EnvRule::new();
     ///
     /// let mut valid_env = HashMap::new();
@@ -74,7 +74,7 @@ impl ValidationRule for EnvRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::EnvRule;
+    /// use executer::rules::EnvRule;
     /// use executer::ValidationRule;
     ///
     /// let rule = EnvRule::new();
@@ -91,7 +91,7 @@ impl ValidationRule for EnvRule {
     /// # Example
     ///
     /// ```rust
-    /// use executer::validate::rules::EnvRule;
+    /// use executer::rules::EnvRule;
     /// use executer::ValidationRule;
     ///
     /// let rule = EnvRule::new();

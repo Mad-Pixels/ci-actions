@@ -1,5 +1,5 @@
-use crate::{Context, ExecuterResult};
 use super::traits::ValidationRule;
+use crate::{Context, ExecuterResult};
 
 /// A validator that runs a collection of validation rules against a context.
 ///
@@ -27,7 +27,7 @@ impl Validator {
     /// struct SampleRule;
     ///
     /// impl ValidationRule for SampleRule {
-    ///     fn validate(&self, _context: &Context) -> executer::error::ExecuterResult<()> {
+    ///     fn validate(&self, _context: &Context) -> executer::ExecuterResult<()> {
     ///         Ok(())
     ///     }
     ///
@@ -45,7 +45,7 @@ impl Validator {
     }
 
     /// Creates a default `Validator` with standard validation rules.
-    /// path, cwd, cmd 
+    /// path, cwd, cmd
     ///
     /// # Example
     ///
@@ -80,7 +80,7 @@ impl Validator {
     /// struct AlwaysValidRule;
     ///
     /// impl ValidationRule for AlwaysValidRule {
-    ///     fn validate(&self, _context: &Context) -> executer::error::ExecuterResult<()> {
+    ///     fn validate(&self, _context: &Context) -> executer::ExecuterResult<()> {
     ///         Ok(())
     ///     }
     ///

@@ -1,15 +1,24 @@
-use super::context::Context;
-use crate::error::{ExecuterError, ExecuterResult};
-use crate::output::Output;
-use crate::validate::Validator;
+use crate::{
+    ExecuterError, 
+    ExecuterResult,
+    Validator,
+    Context,
+    Output,
+};
 
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
 use tokio::time::{timeout, Duration};
+use tokio::process::Command;
 
 use std::process::Stdio;
 use std::sync::Arc;
 
+/// Manages the execution of subprocesses with proper validation and output handling.
+///
+/// The `Subprocess` struct is responsible for executing system commands based on
+/// the provided `Context`. It validates the command using a `Validator`, captures
+/// the standard output and error streams, and writes the output to the designated
+/// targets.
 pub struct Subprocess {
     stdout: Arc<Output>,
     stderr: Arc<Output>,
@@ -17,6 +26,27 @@ pub struct Subprocess {
 }
 
 impl Subprocess {
+    /// Creates a new `Subprocess` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `output` - An `Output` instance to handle logging and output writing.
+    /// * `validator` - A `Validator` instance to validate commands before execution.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use executer::{Output, Subprocess, Target, Validator};
+    /// use processor::{Collection, Item};
+    /// use processor::maskers::regex::MaskerRegex;
+    ///
+    /// let processor = Collection::new(vec![
+    ///     Item::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
+    /// ]);
+    /// let output = Output::new(processor, Target::Stdout, Target::Stderr);
+    /// let validator = Validator::default();
+    /// let subprocess = Subprocess::new(output, validator);
+    /// ```
     pub fn new(output: Output, validator: Validator) -> Self {
         let stderr = Arc::new(output.clone());
         let stdout = Arc::new(output);
@@ -27,6 +57,60 @@ impl Subprocess {
         }
     }
 
+    /// Executes a command based on the provided context.
+    ///
+    /// This method validates the command using the `Validator`, spawns a subprocess,
+    /// captures its standard output and error streams, and writes the outputs to
+    /// the designated targets. It also handles timeouts if specified in the context.
+    ///
+    /// # Arguments
+    ///
+    /// * `context` - The `Context` defining the command, environment variables, working directory, and timeout.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the exit code of the command if successful,
+    /// or an `ExecuterError` if validation fails or command execution encounters an error.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use executer::{Context, Output, Subprocess, Target, Validator};
+    /// use processor::{Collection, Item};
+    /// use processor::maskers::regex::MaskerRegex;
+    /// use std::collections::HashMap;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     // Create a processor with maskers for sensitive data
+    ///     let processor = Collection::new(vec![
+    ///         Item::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
+    ///     ]);
+    ///
+    ///     // Create a subprocess instance
+    ///     let subprocess = Subprocess::new(
+    ///         Output::new(
+    ///             processor,
+    ///             Target::Stdout,
+    ///             Target::Stderr,
+    ///         ), 
+    ///         Validator::default(),
+    ///     );
+    ///
+    ///     // Create a context without a specific working directory and with a timeout
+    ///     let context = Context::new(
+    ///         vec!["echo".to_string(), "Hello, World!".to_string()], 
+    ///         HashMap::new(), 
+    ///         None,
+    ///     ).with_timeout(5);
+    ///
+    ///     // Execute the command
+    ///     match subprocess.execute(context).await {
+    ///         Ok(status) => println!("Command executed with status: {}", status),
+    ///         Err(e) => eprintln!("Command execution failed: {}", e),
+    ///     }
+    /// }
+    /// ```
     pub async fn execute(&self, context: Context) -> ExecuterResult<i32> {
         self.validator.validate(&context)?;
 
@@ -99,10 +183,7 @@ mod tests {
     use crate::output::Target;
     use crate::validate::Validator;
     use processor::{maskers::regex::MaskerRegex, Collection, Item};
-    use slog::{o, Drain, Logger};
-    use std::collections::HashMap;
-    use std::fs;
-    use std::path::PathBuf;
+    use std::{collections::HashMap, path::PathBuf, fs};
     use tempfile::tempdir;
 
     fn create_processor() -> Collection {
