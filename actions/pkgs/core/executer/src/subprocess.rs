@@ -38,7 +38,7 @@ impl Subprocess {
     /// ```rust
     /// use executer::{Output, Subprocess, Target, Validator};
     /// use processor::{Collection, Item};
-    /// use processor::maskers::regex::MaskerRegex;
+    /// use processor::maskers::MaskerRegex;
     ///
     /// let processor = Collection::new(vec![
     ///     Item::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
@@ -77,7 +77,7 @@ impl Subprocess {
     /// ```rust,no_run
     /// use executer::{Context, Output, Subprocess, Target, Validator};
     /// use processor::{Collection, Item};
-    /// use processor::maskers::regex::MaskerRegex;
+    /// use processor::MaskerRegex;
     /// use std::collections::HashMap;
     ///
     /// #[tokio::main]
@@ -182,7 +182,7 @@ mod tests {
 
     use crate::output::Target;
     use crate::validate::Validator;
-    use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    use processor::{maskers::MaskerRegex, Collection, Item};
     use std::{collections::HashMap, path::PathBuf, fs};
     use tempfile::tempdir;
 

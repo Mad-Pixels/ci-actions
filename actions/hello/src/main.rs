@@ -1,4 +1,4 @@
-use processor::{maskers::equal::MaskerEqual, maskers::regex::MaskerRegex, Collection, Item};
+use processor::{maskers::MaskerEqual, maskers::MaskerRegex, Collection, Item};
 use provider::{AWSProvider, Provider};
 use slog::{o, Drain, Logger};
 use std::collections::HashMap;

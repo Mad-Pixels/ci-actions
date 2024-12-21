@@ -1,4 +1,4 @@
-use crate::maskers::{equal::MaskerEqual, regex::MaskerRegex};
+use crate::maskers::{MaskerEqual, MaskerRegex};
 use crate::Processor;
 
 /// Available processor implementations

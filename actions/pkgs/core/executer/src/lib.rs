@@ -20,7 +20,7 @@
 //! ```rust,no_run
 //! use executer::{Context, Output, Target, Subprocess, Validator};
 //! use processor::{Collection, Item};
-//! use processor::maskers::regex::MaskerRegex;
+//! use processor::MaskerRegex;
 //! use std::collections::HashMap;
 //!
 //! #[tokio::main]

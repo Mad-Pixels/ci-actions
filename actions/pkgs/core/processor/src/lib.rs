@@ -8,7 +8,7 @@ mod traits;
 pub use collection::Collection;
 pub use error::ProcessorError;
 pub use item::Item;
-pub use maskers::{equal::MaskerEqual, regex::MaskerRegex};
+pub use maskers::{MaskerEqual, MaskerRegex};
 pub use traits::Processor;
 
 #[cfg(test)]

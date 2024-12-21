@@ -35,7 +35,7 @@ impl Output {
     /// # Example
     ///
     /// ```rust
-    /// use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    /// use processor::{maskers::MaskerRegex, Collection, Item};
     /// use executer::{Output, Target};
     /// use slog::{Logger, o};
     ///
@@ -67,7 +67,7 @@ impl Output {
     /// # Example
     ///
     /// ```rust
-    /// use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    /// use processor::{maskers::MaskerRegex, Collection, Item};
     /// use executer::{Output, Target};
     /// use slog::{Logger, o};
     ///
@@ -94,7 +94,7 @@ impl Output {
     /// # Example
     ///
     /// ```rust
-    /// use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    /// use processor::{maskers::MaskerRegex, Collection, Item};
     /// use executer::{Output, Target};
     /// use slog::{Logger, o};
     ///
@@ -116,7 +116,7 @@ impl Output {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    use processor::{maskers::MaskerRegex, Collection, Item};
 
     /// Creates a processor collection with a regex masker.
     fn create_processor() -> Collection {
