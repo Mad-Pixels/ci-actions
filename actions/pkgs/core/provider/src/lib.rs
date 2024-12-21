@@ -1,9 +1,57 @@
-mod error;
+//! # Provider Crate
+//!
+//! The `provider` crate offers implementations for various cloud providers,
+//! facilitating environment variable management, configuration validation,
+//! and masking of sensitive information.
+//!
+//! ## Modules
+//!
+//! - [`error`]: Defines error types and result aliases used across the crate.
+//! - [`providers`]: Contains implementations of specific cloud providers.
+//! - [`traits`]: Defines the `Provider` trait that all providers must implement.
+//!
+//! ## Usage
+//!
+//! Below is a basic example of how to create and validate an AWS provider.
+//!
+//! ```rust
+//! use provider::{Provider, AWSProvider, ProviderError};
+//! use std::collections::HashMap;
+//!
+//! fn main() -> Result<(), ProviderError> {
+//!     // Setup environment variables
+//!     let mut env = HashMap::new();
+//!     env.insert("AWS_ACCESS_KEY_ID".to_string(), "test-key".to_string());
+//!     env.insert("AWS_SECRET_ACCESS_KEY".to_string(), "test-secret".to_string());
+//!
+//!     // Initialize AWS provider
+//!     let aws_provider = AWSProvider::new(env);
+//!
+//!     // Validate provider configuration
+//!     aws_provider.validate()?;
+//!
+//!     // Retrieve environment variables
+//!     let environment = aws_provider.get_environment();
+//!     println!("AWS Environment: {:?}", environment);
+//!
+//!     // Retrieve sensitive variables
+//!     let sensitive = aws_provider.get_sensitive();
+//!     println!("Sensitive Variables: {:?}", sensitive);
+//!
+//!     // Retrieve predefined masked objects
+//!     let masked_objects = aws_provider.get_predefined_masked_objects();
+//!     println!("Masked Patterns: {:?}", masked_objects);
+//!
+//!     Ok(())
+//! }
+//! ```
+
 mod providers;
 mod traits;
+mod error;
 
-pub use error::ProviderError;
 pub use providers::aws::AWSProvider;
+pub use error::ProviderError;
 pub use traits::Provider;
 
 #[cfg(test)]
