@@ -1,14 +1,8 @@
-use crate::{
-    ExecuterError, 
-    ExecuterResult,
-    Validator,
-    Context,
-    Output,
-};
+use crate::{Context, ExecuterError, ExecuterResult, Output, Validator};
 
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::time::{timeout, Duration};
 use tokio::process::Command;
+use tokio::time::{timeout, Duration};
 
 use std::process::Stdio;
 use std::sync::Arc;
@@ -93,14 +87,14 @@ impl Subprocess {
     ///             processor,
     ///             Target::Stdout,
     ///             Target::Stderr,
-    ///         ), 
+    ///         ),
     ///         Validator::default(),
     ///     );
     ///
     ///     // Create a context without a specific working directory and with a timeout
     ///     let context = Context::new(
-    ///         vec!["echo".to_string(), "Hello, World!".to_string()], 
-    ///         HashMap::new(), 
+    ///         vec!["echo".to_string(), "Hello, World!".to_string()],
+    ///         HashMap::new(),
     ///         None,
     ///     ).with_timeout(5);
     ///
@@ -183,7 +177,7 @@ mod tests {
     use crate::output::Target;
     use crate::validate::Validator;
     use processor::{maskers::MaskerRegex, MaskerCollection, MaskerItem};
-    use std::{collections::HashMap, path::PathBuf, fs};
+    use std::{collections::HashMap, fs, path::PathBuf};
     use tempfile::tempdir;
 
     fn create_processor() -> MaskerCollection {

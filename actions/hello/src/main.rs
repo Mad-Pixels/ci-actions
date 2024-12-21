@@ -29,7 +29,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
     let equal_processor = MaskerEqual::new(vec!["password", "key"], "***");
 
-    let processors = vec![MaskerItem::Regex(regexp_processor), MaskerItem::Equal(equal_processor)];
+    let processors = vec![
+        MaskerItem::Regex(regexp_processor),
+        MaskerItem::Equal(equal_processor),
+    ];
 
     //provider.get_predefined_masked_objects()
     let processor = MaskerCollection::new(processors);
@@ -44,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Переменные для terraform
     let mut vars = HashMap::new();
-
+    
 
     // Запускаем plan
     let plan_result = executor
