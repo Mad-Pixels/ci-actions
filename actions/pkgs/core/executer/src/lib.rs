@@ -1,6 +1,6 @@
 mod context;
 mod error;
-mod output;
+pub mod output;
 mod subprocess;
 mod validate;
 

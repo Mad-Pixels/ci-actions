@@ -1,15 +1,24 @@
 use super::types::Target;
+
 use std::fs::OpenOptions;
 use std::io::Write;
 
+/// Handles writing log messages to different targets.
 #[derive(Clone)]
 pub(crate) struct Writer;
 
 impl Writer {
+    /// Creates a new `Writer` instance.
     pub fn new() -> Self {
         Self
     }
 
+    /// Writes a log message to the specified target.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - The log message to be written.
+    /// * `target` - The target where the message should be written.
     pub fn write(&self, line: &str, target: &Target) {
         match target {
             Target::Stdout => println!("{}", line),

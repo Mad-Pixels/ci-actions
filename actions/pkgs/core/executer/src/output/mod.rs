@@ -9,6 +9,11 @@ use processor::{Collection, Processor};
 use slog::{o, Drain, Logger};
 use writer::Writer;
 
+/// Represents an output handler that processes and routes log messages.
+///
+/// The `Output` struct handles logging messages by processing them through
+/// a `Collection` of processors and directing them to specified targets
+/// such as files or standard output/error streams.
 #[derive(Clone)]
 pub struct Output {
     processor: Collection,
@@ -19,6 +24,28 @@ pub struct Output {
 }
 
 impl Output {
+    /// Creates a new `Output` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `processor` - A collection of processors to handle log message processing.
+    /// * `output_target` - The target where standard log messages will be written.
+    /// * `error_target` - The target where error log messages will be written.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    /// use executer::output::{Output, Target};
+    /// use slog::{Logger, o};
+    ///
+    /// fn create_processor() -> Collection {
+    ///     let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
+    ///     Collection::new(vec![Item::Regex(masker)])
+    /// }
+    ///
+    /// let output = Output::new(create_processor(), Target::Stdout, Target::Stderr);
+    /// ```
     pub fn new(processor: Collection, output_target: Target, error_target: Target) -> Self {
         let drain = slog_async::Async::new(PlainFormatter.fuse()).build().fuse();
 
@@ -31,12 +58,54 @@ impl Output {
         }
     }
 
+    /// Writes a standard log message to the designated output target.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - The log message to be written.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    /// use executer::output::{Output, Target};
+    /// use slog::{Logger, o};
+    ///
+    /// fn create_processor() -> Collection {
+    ///     let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
+    ///     Collection::new(vec![Item::Regex(masker)])
+    /// }
+    ///
+    /// let output = Output::new(create_processor(), Target::Stdout, Target::Stderr);
+    /// output.write("This is an log message");
+    /// ```
     pub fn write(&self, line: &str) {
         let processed = self.processor.process(line);
         slog::info!(self.logger, "{}", processed);
         self.writer.write(&processed, &self.output_target);
     }
 
+    /// Writes an error log message to the designated error target.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - The error message to be written.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    /// use executer::output::{Output, Target};
+    /// use slog::{Logger, o};
+    ///
+    /// fn create_processor() -> Collection {
+    ///     let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
+    ///     Collection::new(vec![Item::Regex(masker)])
+    /// }
+    ///
+    /// let output = Output::new(create_processor(), Target::Stdout, Target::Stderr);
+    /// output.write_error("This is an error message");
+    /// ```
     pub fn write_error(&self, line: &str) {
         let processed = self.processor.process(line);
         slog::error!(self.logger, "{}", processed);
@@ -49,6 +118,7 @@ mod tests {
     use super::*;
     use processor::{maskers::regex::MaskerRegex, Collection, Item};
 
+    /// Creates a processor collection with a regex masker.
     fn create_processor() -> Collection {
         let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
         Collection::new(vec![Item::Regex(masker)])
