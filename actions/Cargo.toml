@@ -2,8 +2,8 @@
 resolver = "2"
 members = [
     "hello",
-    "pkgs/terraform",
-    "pkgs/core/processor",
-    "pkgs/core/executer",
-    "pkgs/core/provider"
+    "pkg/terraform",
+    "pkg/core/processor",
+    "pkg/core/executer",
+    "pkg/core/provider"
 ]

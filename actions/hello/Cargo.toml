@@ -13,10 +13,10 @@ slog-term = "2.9"
 slog-async = "2.7"
 thiserror = "1.0"
 async-stream = "0.3"
-processor = { path = "../pkgs/core/processor" }
-executer = { path = "../pkgs/core/executer"}
-terraform = { path = "../pkgs/terraform"}
-provider = { path = "../pkgs/core/provider" }
+processor = { path = "../pkg/core/processor" }
+executer = { path = "../pkg/core/executer"}
+terraform = { path = "../pkg/terraform"}
+provider = { path = "../pkg/core/provider" }
 
 
 [dev-dependencies]
