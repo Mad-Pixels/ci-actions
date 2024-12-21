@@ -37,9 +37,9 @@ mod tests {
         let writer = Writer::new();
         let temp_dir = tempdir().unwrap();
         let file_path = temp_dir.path().join("test.log");
-        
+
         writer.write("test line", &Target::File(file_path.clone()));
-        
+
         let content = std::fs::read_to_string(file_path).unwrap();
         assert_eq!(content.trim(), "test line");
     }

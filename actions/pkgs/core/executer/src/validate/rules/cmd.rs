@@ -1,6 +1,6 @@
-use crate::validate::traits::ValidationRule;
-use crate::error::ExecuterError;
 use crate::context::Context;
+use crate::error::ExecuterError;
+use crate::validate::traits::ValidationRule;
 
 pub struct CmdRule {
     forbidden_chars: Vec<char>,
@@ -23,24 +23,31 @@ impl CmdRule {
 impl ValidationRule for CmdRule {
     fn validate(&self, context: &Context) -> Result<(), ExecuterError> {
         if context.command.is_empty() {
-            return Err(ExecuterError::ValidationError("Empty command sequence".to_string()));
+            return Err(ExecuterError::ValidationError(
+                "Empty command sequence".to_string(),
+            ));
         }
         for (i, arg) in context.command.iter().enumerate() {
-            if i > 0 && context.command[i-1] == "-c" {
+            if i > 0 && context.command[i - 1] == "-c" {
                 continue;
             }
             if arg.chars().any(|c| self.forbidden_chars.contains(&c)) {
-                return Err(ExecuterError::ValidationError(
-                    format!("Invalid command argument '{}': contains forbidden characters", arg)
-                ));
+                return Err(ExecuterError::ValidationError(format!(
+                    "Invalid command argument '{}': contains forbidden characters",
+                    arg
+                )));
             }
         }
         Ok(())
     }
 
-    fn name(&self) -> &'static str { "cmd" }
+    fn name(&self) -> &'static str {
+        "cmd"
+    }
 
-    fn priority(&self) -> i32 { 0 }
+    fn priority(&self) -> i32 {
+        0
+    }
 }
 
 #[cfg(test)]

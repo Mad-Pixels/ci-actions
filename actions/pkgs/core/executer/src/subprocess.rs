@@ -1,11 +1,11 @@
 use super::context::Context;
-use crate::error::{ExecuterResult, ExecuterError};
-use crate::validate::Validator;
+use crate::error::{ExecuterError, ExecuterResult};
 use crate::output::Output;
+use crate::validate::Validator;
 
-use tokio::io::{BufReader, AsyncBufReadExt};
-use tokio::time::{timeout, Duration};
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
+use tokio::time::{timeout, Duration};
 
 use std::process::Stdio;
 use std::sync::Arc;
@@ -20,7 +20,11 @@ impl Subprocess {
     pub fn new(output: Output, validator: Validator) -> Self {
         let stderr = Arc::new(output.clone());
         let stdout = Arc::new(output);
-        Self { stdout, stderr, validator}
+        Self {
+            stdout,
+            stderr,
+            validator,
+        }
     }
 
     pub async fn execute(&self, context: Context) -> ExecuterResult<i32> {
@@ -39,9 +43,13 @@ impl Subprocess {
         }
         let mut child = command.spawn()?;
 
-        let stdout = child.stdout.take()
+        let stdout = child
+            .stdout
+            .take()
             .ok_or_else(|| ExecuterError::ExecutionError("Failed to capture stdout".to_string()))?;
-        let stderr = child.stderr.take()
+        let stderr = child
+            .stderr
+            .take()
             .ok_or_else(|| ExecuterError::ExecutionError("Failed to capture stderr".to_string()))?;
 
         let stdout_output = Arc::clone(&self.stdout);
@@ -65,20 +73,21 @@ impl Subprocess {
                 Ok(status) => status?,
                 Err(_) => {
                     child.kill().await?;
-                    return Err(ExecuterError::ExecutionError(
-                        format!("Command timed out after {} seconds", t)
-                    ));
+                    return Err(ExecuterError::ExecutionError(format!(
+                        "Command timed out after {} seconds",
+                        t
+                    )));
                 }
             }
         } else {
             child.wait().await?
         };
-        stdout_handle.await.map_err(|e| 
+        stdout_handle.await.map_err(|e| {
             ExecuterError::ExecutionError(format!("Failed to process stdout: {}", e))
-        )?;
-        stderr_handle.await.map_err(|e| 
+        })?;
+        stderr_handle.await.map_err(|e| {
             ExecuterError::ExecutionError(format!("Failed to process stderr: {}", e))
-        )?;
+        })?;
         Ok(status.code().unwrap_or(2))
     }
 }
@@ -86,29 +95,19 @@ impl Subprocess {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
-    use processor::{Collection, Item, maskers::regex::MaskerRegex};
-    use crate::validate::Validator;
-    use std::collections::HashMap;
-    use slog::{Logger, Drain, o};
+
     use crate::output::Target;
+    use crate::validate::Validator;
+    use processor::{maskers::regex::MaskerRegex, Collection, Item};
+    use slog::{o, Drain, Logger};
+    use std::collections::HashMap;
+    use std::fs;
     use std::path::PathBuf;
     use tempfile::tempdir;
-    use std::fs;
-
-    fn setup_logger() -> Logger {
-        let decorator = slog_term::TermDecorator::new().build();
-        let drain = slog_term::FullFormat::new(decorator).build().fuse();
-        let drain = slog_async::Async::new(drain).build().fuse();
-        Logger::root(drain, o!())
-    }
 
     fn create_processor() -> Collection {
-        let masker = MaskerRegex::new(vec![
-            r"password=\w+",
-            r"secret=\w+",
-            r"token=\w+"
-        ], "****").unwrap();
+        let masker =
+            MaskerRegex::new(vec![r"password=\w+", r"secret=\w+", r"token=\w+"], "****").unwrap();
         Collection::new(vec![Item::Regex(masker)])
     }
 
@@ -137,19 +136,15 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
         let subprocess = Subprocess::new(output, validator);
 
-        let context = Context::new(
-            build_command("echo hello"),
-            HashMap::new(),
-            None,
-        );
+        let context = Context::new(build_command("echo hello"), HashMap::new(), None);
 
-        let status = subprocess.execute(context)
+        let status = subprocess
+            .execute(context)
             .await
             .expect("Failed to execute echo command");
 
@@ -168,7 +163,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(error_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
@@ -179,13 +173,10 @@ mod tests {
         #[cfg(windows)]
         let cmd = "cmd /C \"echo password=secret123 && echo token=abc123 1>&2\"";
 
-        let context = Context::new(
-            build_command(cmd),
-            HashMap::new(),
-            None,
-        );
+        let context = Context::new(build_command(cmd), HashMap::new(), None);
 
-        let status = subprocess.execute(context)
+        let status = subprocess
+            .execute(context)
             .await
             .expect("Failed to execute command with sensitive data");
 
@@ -209,7 +200,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(error_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
@@ -220,13 +210,10 @@ mod tests {
         #[cfg(windows)]
         let cmd = "cmd /C \"echo stdout message && echo password=secret 1>&2\"";
 
-        let context = Context::new(
-            build_command(cmd),
-            HashMap::new(),
-            None,
-        );
+        let context = Context::new(build_command(cmd), HashMap::new(), None);
 
-        let status = subprocess.execute(context)
+        let status = subprocess
+            .execute(context)
             .await
             .expect("Failed to execute command with stderr");
 
@@ -248,7 +235,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
@@ -259,13 +245,10 @@ mod tests {
         #[cfg(windows)]
         let cmd_success = "cmd /C \"exit /B 0\"";
 
-        let context_success = Context::new(
-            build_command(cmd_success),
-            HashMap::new(),
-            None,
-        );
+        let context_success = Context::new(build_command(cmd_success), HashMap::new(), None);
 
-        let status = subprocess.execute(context_success)
+        let status = subprocess
+            .execute(context_success)
             .await
             .expect("Failed to execute success command");
         assert_eq!(status, 0);
@@ -275,13 +258,10 @@ mod tests {
         #[cfg(windows)]
         let cmd_error = "cmd /C \"exit /B 1\"";
 
-        let context_error = Context::new(
-            build_command(cmd_error),
-            HashMap::new(),
-            None,
-        );
+        let context_error = Context::new(build_command(cmd_error), HashMap::new(), None);
 
-        let status = subprocess.execute(context_error)
+        let status = subprocess
+            .execute(context_error)
             .await
             .expect("Failed to execute error command");
         assert_eq!(status, 1);
@@ -296,7 +276,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
@@ -305,15 +284,13 @@ mod tests {
         #[cfg(unix)]
         let cmd = "for i in 1 2 3; do echo \"Step $i\"; sleep 0.1; done";
         #[cfg(windows)]
-        let cmd = "cmd /C \"for /L %i in (1,1,3) do @(echo Step %i && timeout /t 1 /nobreak > nul)\"";
+        let cmd =
+            "cmd /C \"for /L %i in (1,1,3) do @(echo Step %i && timeout /t 1 /nobreak > nul)\"";
 
-        let context = Context::new(
-            build_command(cmd),
-            HashMap::new(),
-            None,
-        );
+        let context = Context::new(build_command(cmd), HashMap::new(), None);
 
-        let status = subprocess.execute(context)
+        let status = subprocess
+            .execute(context)
             .await
             .expect("Failed to execute sequential commands");
         assert_eq!(status, 0);
@@ -333,7 +310,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
@@ -342,15 +318,13 @@ mod tests {
         #[cfg(unix)]
         let cmd = "seq 1 100 | xargs -I{} echo \"password=secret{}\"";
         #[cfg(windows)]
-        let cmd = "powershell -Command \"1..100 | ForEach-Object { echo \\\"password=secret$_\\\" }\"";
+        let cmd =
+            "powershell -Command \"1..100 | ForEach-Object { echo \\\"password=secret$_\\\" }\"";
 
-        let context = Context::new(
-            build_command(cmd),
-            HashMap::new(),
-            None,
-        );
+        let context = Context::new(build_command(cmd), HashMap::new(), None);
 
-        let status = subprocess.execute(context)
+        let status = subprocess
+            .execute(context)
             .await
             .expect("Failed to execute command with large output");
         assert_eq!(status, 0);
@@ -368,20 +342,14 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
         let subprocess = Subprocess::new(output, validator);
 
-        let context = Context::new(
-            vec!["nonexistentcommand".to_string()],
-            HashMap::new(),
-            None,
-        );
+        let context = Context::new(vec!["nonexistentcommand".to_string()], HashMap::new(), None);
 
-        let result = subprocess.execute(context)
-            .await;
+        let result = subprocess.execute(context).await;
 
         assert!(result.is_err());
     }
@@ -396,7 +364,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(error_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
@@ -407,13 +374,10 @@ mod tests {
         #[cfg(windows)]
         let cmd = "cmd /C \"echo password=secret1 && echo password=secret2 1>&2\"";
 
-        let context = Context::new(
-            build_command(cmd),
-            HashMap::new(),
-            None,
-        );
+        let context = Context::new(build_command(cmd), HashMap::new(), None);
 
-        let status = subprocess.execute(context)
+        let status = subprocess
+            .execute(context)
             .await
             .expect("Failed to execute concurrent commands");
 
@@ -436,7 +400,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
@@ -447,13 +410,10 @@ mod tests {
         #[cfg(windows)]
         let cmd = "cmd /C \"exit /B 0\"";
 
-        let context = Context::new(
-            build_command(cmd),
-            HashMap::new(),
-            None,
-        );
+        let context = Context::new(build_command(cmd), HashMap::new(), None);
 
-        let status = subprocess.execute(context)
+        let status = subprocess
+            .execute(context)
             .await
             .expect("Failed to execute empty command");
 
@@ -461,7 +421,7 @@ mod tests {
         if output_path.exists() {
             let content = fs::read_to_string(&output_path).expect("Failed to read output file");
             assert!(content.trim().is_empty());
-        } 
+        }
     }
 
     #[tokio::test]
@@ -473,7 +433,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
 
         let validator = Validator::default();
@@ -484,21 +443,16 @@ mod tests {
         #[cfg(windows)]
         let cmd = "cmd /C \"timeout /t 5 /nobreak > nul\"";
 
-        let context = Context::new(
-            build_command(cmd),
-            HashMap::new(),
-            None,
-        ).with_timeout(1);
+        let context = Context::new(build_command(cmd), HashMap::new(), None).with_timeout(1);
 
-        let result = subprocess.execute(context)
-            .await;
+        let result = subprocess.execute(context).await;
 
         assert!(result.is_err());
         if let Err(e) = result {
             match e {
                 ExecuterError::ExecutionError(msg) => {
                     assert!(msg.contains("timed out"));
-                },
+                }
                 _ => panic!("Unexpected error type"),
             }
         }
@@ -510,77 +464,69 @@ mod tests {
         let nested_dir = temp_dir.path().join("nested");
         fs::create_dir(&nested_dir).expect("Failed to create nested directory");
         let output_path = temp_dir.path().join("output.log");
-    
+
         let output = Output::new(
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
-    
+
         let validator = Validator::default();
         let subprocess = Subprocess::new(output, validator);
-    
+
         #[cfg(unix)]
         let cmd = "pwd";
         #[cfg(windows)]
         let cmd = "cmd /C \"cd\"";
-    
-        let context = Context::new(
-            build_command(cmd),
-            HashMap::new(),
-            Some(nested_dir.clone()),
-        );
-    
-        let status = subprocess.execute(context)
+
+        let context = Context::new(build_command(cmd), HashMap::new(), Some(nested_dir.clone()));
+
+        let status = subprocess
+            .execute(context)
             .await
             .expect("Failed to execute command with working directory");
-    
+
         assert_eq!(status, 0);
-    
+
         let content = fs::read_to_string(&output_path).expect("Failed to read output file");
-    
-        let expected = nested_dir.canonicalize().expect("Failed to canonicalize nested_dir");
-        let actual = PathBuf::from(content.trim()).canonicalize().expect("Failed to canonicalize actual path");
-    
-        assert_eq!(actual, expected, "The working directory does not match the expected path");
+
+        let expected = nested_dir
+            .canonicalize()
+            .expect("Failed to canonicalize nested_dir");
+        let actual = PathBuf::from(content.trim())
+            .canonicalize()
+            .expect("Failed to canonicalize actual path");
+
+        assert_eq!(
+            actual, expected,
+            "The working directory does not match the expected path"
+        );
     }
-    
 
     #[tokio::test]
     async fn test_clean_env() {
         let temp_dir = tempdir().expect("Failed to create temp dir");
         let output_path = temp_dir.path().join("output.log");
-    
+
         let output = Output::new(
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(output_path.clone()),
-            setup_logger(),
         );
-    
+
         let validator = Validator::default();
         let subprocess = Subprocess::new(output, validator);
-    
+
         let env = HashMap::new();
-    
-        let cmd = if cfg!(unix) {
-            "env"
-        } else {
-            "set"
-        };
-    
-        let context = Context::new(
-            build_command(cmd),
-            env,
-            None,
-        );
-    
+
+        let cmd = if cfg!(unix) { "env" } else { "set" };
+
+        let context = Context::new(build_command(cmd), env, None);
+
         let status = subprocess.execute(context).await.unwrap();
         assert_eq!(status, 0);
-    
+
         let content = fs::read_to_string(output_path).unwrap();
         assert!(!content.contains("TEST_VAR"));
     }
-    
 }

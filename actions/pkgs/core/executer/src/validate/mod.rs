@@ -1,6 +1,6 @@
-mod validator;
-mod traits;
 mod rules;
+mod traits;
+mod validator;
 
 pub use rules::{CmdRule, EnvRule, PathRule};
 pub use traits::ValidationRule;
@@ -9,9 +9,9 @@ pub use validator::Validator;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::context::Context;
     use std::collections::HashMap;
     use std::path::PathBuf;
-    use crate::context::Context;
 
     fn create_cmd_context(cmd: Vec<String>) -> Context {
         Context::new(cmd, HashMap::new(), None)
@@ -35,7 +35,7 @@ mod tests {
     #[test]
     fn test_invalid_command_validation() {
         let validator = Validator::default();
-        
+
         let context = create_cmd_context(vec![]);
         assert!(validator.validate(&context).is_err());
 
@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn test_invalid_env_validation() {
         let validator = Validator::default();
-        
+
         let mut env = HashMap::new();
         env.insert("TEST".to_string(), "".to_string());
         let context = create_env_context(env);
@@ -120,7 +120,7 @@ mod tests {
         ];
         let validator = Validator::new(rules);
         let context = Context::new(vec![], HashMap::new(), None);
-        
+
         assert!(validator.validate(&context).is_err());
     }
 

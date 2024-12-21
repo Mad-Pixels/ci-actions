@@ -16,7 +16,7 @@ impl MaskerRegex {
             .map(|p| Regex::new(p.as_ref()).map_err(|e| ProcessorError::RegexError(e.to_string())))
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Self { 
+        Ok(Self {
             patterns,
             mask: mask.to_string(),
         })

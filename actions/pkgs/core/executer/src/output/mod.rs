@@ -1,16 +1,13 @@
 mod formatter;
-mod writer;
 mod types;
+mod writer;
 
-use slog::o;
 pub use types::Target;
 
-use processor::{Collection, Processor};
 use formatter::PlainFormatter;
+use processor::{Collection, Processor};
+use slog::{o, Drain, Logger};
 use writer::Writer;
-use slog::Logger;
-
-use slog::Drain;
 
 #[derive(Clone)]
 pub struct Output {
@@ -22,21 +19,15 @@ pub struct Output {
 }
 
 impl Output {
-    pub fn new(
-        processor: Collection,
-        output_target: Target,
-        error_target: Target,
-        logger: Logger,
-    ) -> Self {
-        let async_drain = slog_async::Async::new(PlainFormatter.fuse()).build().fuse();
-        let clean_logger = Logger::root(async_drain, o!());
+    pub fn new(processor: Collection, output_target: Target, error_target: Target) -> Self {
+        let drain = slog_async::Async::new(PlainFormatter.fuse()).build().fuse();
 
-        Self { 
-            processor,
+        Self {
+            logger: Logger::root(drain, o!()),
+            writer: Writer::new(),
             output_target,
             error_target,
-            logger: clean_logger,
-            writer: Writer::new(),
+            processor,
         }
     }
 
@@ -56,15 +47,7 @@ impl Output {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use processor::{Collection, Item, maskers::regex::MaskerRegex};
-    use slog::{Logger, Drain, o};
-
-    fn setup_logger() -> Logger {
-        let decorator = slog_term::TermDecorator::new().build();
-        let drain = slog_term::FullFormat::new(decorator).build().fuse();
-        let drain = slog_async::Async::new(drain).build().fuse();
-        Logger::root(drain, o!())
-    }
+    use processor::{maskers::regex::MaskerRegex, Collection, Item};
 
     fn create_processor() -> Collection {
         let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
@@ -73,20 +56,13 @@ mod tests {
 
     #[test]
     fn test_stdout_output() {
-        let logger = setup_logger();
-        let output = Output::new(
-            create_processor(),
-            Target::Stdout,
-            Target::Stderr,
-            logger,
-        );
+        let output = Output::new(create_processor(), Target::Stdout, Target::Stderr);
         output.write("password=secret");
         output.write_error("error message");
     }
 
     #[test]
     fn test_file_output() {
-        let logger = setup_logger();
         let temp_dir = tempfile::tempdir().unwrap();
         let output_path = temp_dir.path().join("output.log");
         let error_path = temp_dir.path().join("error.log");
@@ -95,7 +71,6 @@ mod tests {
             create_processor(),
             Target::File(output_path.clone()),
             Target::File(error_path.clone()),
-            logger,
         );
         output.write("password=secret");
         output.write_error("error message");

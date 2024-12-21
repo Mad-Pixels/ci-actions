@@ -10,14 +10,10 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(
-        command: Vec<String>,
-        env: HashMap<String, String>,
-        cwd: Option<PathBuf>,
-    ) -> Self {
-        Self { 
-            command, 
-            env, 
+    pub fn new(command: Vec<String>, env: HashMap<String, String>, cwd: Option<PathBuf>) -> Self {
+        Self {
+            command,
+            env,
             cwd,
             timeout: None,
         }

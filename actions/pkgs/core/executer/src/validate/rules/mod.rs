@@ -1,6 +1,6 @@
-mod path;
-mod env;
 mod cmd;
+mod env;
+mod path;
 
 pub use cmd::CmdRule;
 pub use env::EnvRule;

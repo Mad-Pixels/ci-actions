@@ -1,5 +1,5 @@
 mod constants;
-mod provider;
 mod patterns;
+mod provider;
 
 pub use provider::AWSProvider;

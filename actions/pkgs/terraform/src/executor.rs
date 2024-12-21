@@ -1,8 +1,7 @@
 use crate::command::{TerraformCommand, WorkspaceOperation};
 use crate::error::{TerraformError, TerraformResult};
-use executer::{Subprocess, Validator, Context, Output, Target};
+use executer::{Context, Output, Subprocess, Target, Validator};
 use processor::Collection;
-use slog::Logger;
 use std::path::PathBuf;
 
 pub struct TerraformExecutor {
@@ -11,22 +10,12 @@ pub struct TerraformExecutor {
 }
 
 impl TerraformExecutor {
-    pub fn new(
-        processor: Collection, 
-        logger: Logger,
-        terraform_path: PathBuf,
-    ) -> Self {
+    pub fn new(processor: Collection, terraform_path: PathBuf) -> Self {
+        let output = Output::new(processor, Target::Stdout, Target::Stderr);
 
-        let output = Output::new(
-            processor,
-            Target::Stdout,
-            Target::Stderr,
-            logger,
-        );
-        
         let validator = Validator::default();
         let subprocess = Subprocess::new(output, validator);
-        
+
         Self {
             subprocess,
             terraform_path,
@@ -51,7 +40,8 @@ impl TerraformExecutor {
             Some(working_dir.clone()),
         );
 
-        self.subprocess.execute(context)
+        self.subprocess
+            .execute(context)
             .await
             .map_err(TerraformError::from)
     }
@@ -64,7 +54,8 @@ impl TerraformExecutor {
         self.execute(TerraformCommand::Init {
             dir,
             backend_config,
-        }).await
+        })
+        .await
     }
 
     pub async fn plan(
@@ -73,11 +64,8 @@ impl TerraformExecutor {
         vars: std::collections::HashMap<String, String>,
         out: Option<PathBuf>,
     ) -> TerraformResult<i32> {
-        self.execute(TerraformCommand::Plan {
-            dir,
-            vars,
-            out,
-        }).await
+        self.execute(TerraformCommand::Plan { dir, vars, out })
+            .await
     }
 
     pub async fn apply(
@@ -90,7 +78,8 @@ impl TerraformExecutor {
             dir,
             plan_file,
             auto_approve,
-        }).await
+        })
+        .await
     }
 
     pub async fn workspace(
@@ -98,9 +87,7 @@ impl TerraformExecutor {
         dir: PathBuf,
         operation: WorkspaceOperation,
     ) -> TerraformResult<i32> {
-        self.execute(TerraformCommand::Workspace {
-            dir,
-            operation,
-        }).await
+        self.execute(TerraformCommand::Workspace { dir, operation })
+            .await
     }
 }

@@ -1,6 +1,6 @@
 use super::traits::ValidationRule;
-use crate::error::ExecuterResult;
 use crate::context::Context;
+use crate::error::ExecuterResult;
 
 pub struct Validator {
     rules: Vec<Box<dyn ValidationRule>>,

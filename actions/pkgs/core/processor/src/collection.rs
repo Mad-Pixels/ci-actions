@@ -15,8 +15,8 @@ impl Collection {
 
 impl Processor for Collection {
     fn process(&self, input: &str) -> String {
-        self.processors.iter().fold(input.to_string(), |acc, processor| {
-            processor.process(&acc)
-        })
+        self.processors
+            .iter()
+            .fold(input.to_string(), |acc, processor| processor.process(&acc))
     }
 }

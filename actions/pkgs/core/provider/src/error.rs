@@ -4,7 +4,7 @@ use thiserror::Error;
 pub enum ProviderError {
     #[error("Missing required environment variable: {0}")]
     MissingEnvironmentVariable(String),
-    
+
     #[error("Invalid environment configuration: {0}")]
     InvalidConfiguration(String),
 }

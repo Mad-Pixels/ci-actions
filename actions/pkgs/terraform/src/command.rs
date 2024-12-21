@@ -31,7 +31,10 @@ pub enum TerraformCommand {
 impl TerraformCommand {
     pub fn to_args(&self) -> Vec<String> {
         match self {
-            Self::Init { dir: _, backend_config } => {
+            Self::Init {
+                dir: _,
+                backend_config,
+            } => {
                 let mut args = vec!["init".to_string()];
                 if let Some(config) = backend_config {
                     for (key, value) in config {
@@ -39,7 +42,7 @@ impl TerraformCommand {
                     }
                 }
                 args
-            },
+            }
             Self::Plan { dir: _, vars, out } => {
                 let mut args = vec!["plan".to_string()];
                 for (key, value) in vars {
@@ -50,8 +53,12 @@ impl TerraformCommand {
                     args.push(out_file.to_string_lossy().to_string());
                 }
                 args
-            },
-            Self::Apply { dir: _, plan_file, auto_approve } => {
+            }
+            Self::Apply {
+                dir: _,
+                plan_file,
+                auto_approve,
+            } => {
                 let mut args = vec!["apply".to_string()];
                 if *auto_approve {
                     args.push("-auto-approve".to_string());
@@ -60,7 +67,7 @@ impl TerraformCommand {
                     args.push(file.to_string_lossy().to_string());
                 }
                 args
-            },
+            }
             Self::Workspace { dir: _, operation } => {
                 let mut args = vec!["workspace".to_string()];
                 match operation {
@@ -68,18 +75,18 @@ impl TerraformCommand {
                     WorkspaceOperation::New(name) => {
                         args.push("new".to_string());
                         args.push(name.clone());
-                    },
+                    }
                     WorkspaceOperation::Select(name) => {
                         args.push("select".to_string());
                         args.push(name.clone());
-                    },
+                    }
                     WorkspaceOperation::Delete(name) => {
                         args.push("delete".to_string());
                         args.push(name.clone());
-                    },
+                    }
                 }
                 args
-            },
+            }
         }
     }
 }

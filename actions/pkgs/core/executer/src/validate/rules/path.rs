@@ -1,6 +1,6 @@
-use crate::validate::traits::ValidationRule;
-use crate::error::ExecuterError;
 use crate::context::Context;
+use crate::error::ExecuterError;
+use crate::validate::traits::ValidationRule;
 
 pub struct PathRule;
 
@@ -14,22 +14,28 @@ impl ValidationRule for PathRule {
     fn validate(&self, context: &Context) -> Result<(), ExecuterError> {
         if let Some(path) = &context.cwd {
             if !path.exists() {
-                return Err(ExecuterError::ValidationError(
-                    format!("Working directory does not exist: {}", path.display())
-                ));
+                return Err(ExecuterError::ValidationError(format!(
+                    "Working directory does not exist: {}",
+                    path.display()
+                )));
             }
             if !path.is_dir() {
-                return Err(ExecuterError::ValidationError(
-                    format!("Path is not a directory: {}", path.display())
-                ));
+                return Err(ExecuterError::ValidationError(format!(
+                    "Path is not a directory: {}",
+                    path.display()
+                )));
             }
         }
         Ok(())
     }
 
-    fn name(&self) -> &'static str { "path" }
+    fn name(&self) -> &'static str {
+        "path"
+    }
 
-    fn priority(&self) -> i32 { 2 }
+    fn priority(&self) -> i32 {
+        2
+    }
 }
 
 #[cfg(test)]
