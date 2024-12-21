@@ -23,7 +23,7 @@ impl TerraformExecutor {
     }
 
     pub async fn execute(&self, command: TerraformCommand) -> TerraformResult<i32> {
-        let mut args = command.to_args();
+        let args = command.to_args();
         let working_dir = match &command {
             TerraformCommand::Init { dir, .. } => dir,
             TerraformCommand::Plan { dir, .. } => dir,
