@@ -10,18 +10,10 @@ pub struct MaskerRegex {
 }
 
 impl MaskerRegex {
-    /// Create new regex processor
-    ///
-    /// # Arguments
-    /// * `patterns` - List of regex patterns to match
-    /// * `mask` - Replacement string
-    ///
-    /// # Errors
-    /// Returns `ProcessorError::RegexError` if any pattern is invalid
-    pub fn new(patterns: Vec<&str>, mask: &str) -> Result<Self, ProcessorError> {
+    pub fn new<T: AsRef<str>>(patterns: Vec<T>, mask: &str) -> Result<Self, ProcessorError> {
         let patterns = patterns
-            .into_iter()
-            .map(|p| Regex::new(p).map_err(|e| ProcessorError::RegexError(e.to_string())))
+            .iter()
+            .map(|p| Regex::new(p.as_ref()).map_err(|e| ProcessorError::RegexError(e.to_string())))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Self { 

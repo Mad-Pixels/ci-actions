@@ -1,11 +1,16 @@
+mod formatter;
 mod writer;
 mod types;
 
+use slog::o;
 pub use types::Target;
 
 use processor::{Collection, Processor};
+use formatter::PlainFormatter;
 use writer::Writer;
 use slog::Logger;
+
+use slog::Drain;
 
 #[derive(Clone)]
 pub struct Output {
@@ -23,11 +28,14 @@ impl Output {
         error_target: Target,
         logger: Logger,
     ) -> Self {
+        let async_drain = slog_async::Async::new(PlainFormatter.fuse()).build().fuse();
+        let clean_logger = Logger::root(async_drain, o!());
+
         Self { 
             processor,
             output_target,
             error_target,
-            logger,
+            logger: clean_logger,
             writer: Writer::new(),
         }
     }

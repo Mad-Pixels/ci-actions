@@ -1,76 +1,78 @@
-// use std::collections::HashMap;
-// use slog::{Logger, Drain, o};
-// use processor::{Collection, Item, maskers::regex::MaskerRegex};
-// use executer::{SubprocessExecuter, IsolateExecuter, CommandExecuter};
-// use futures::StreamExt;
+use std::path::PathBuf;
+use processor::{Collection, Item, maskers::regex::MaskerRegex, maskers::equal::MaskerEqual};
+use provider::{AWSProvider, Provider};
+use slog::{Logger, Drain, o};
+use std::collections::HashMap;
 
-// #[tokio::main]
-// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//     // Настраиваем логгер
-//     let decorator = slog_term::TermDecorator::new().build();
-//     let drain = slog_term::FullFormat::new(decorator).build().fuse();
-//     let drain = slog_async::Async::new(drain).build().fuse();
-//     let logger = Logger::root(drain, o!());
+use terraform::executor::TerraformExecutor;
 
-//     // Создаем маскировщик для конфиденциальных данных
-//     let masker = MaskerRegex::new(
-//         vec![
-//             r"\d{4}-\d{4}-\d{4}-\d{4}", // Номера кредитных карт
-//             r"password=\w+",             // Пароли
-//             r"secret=\w+",              // Секреты
-//             r"token=\w+",               // Токены
-//         ],
-//         "****"
-//     )?;  // Добавляем обработку ошибок, так как new теперь возвращает Result
-//     let collection = Collection::new(vec![Item::Regex(masker)]);
 
-//     // Пример 1: Простой SubprocessExecuter
-//     println!("\n=== Simple SubprocessExecuter Example ===");
-//     let executer = SubprocessExecuter::new(Some(collection.clone()), logger.clone());
-    
-//     let mut stream = executer.execute_stream(
-//         vec!["echo".to_string(), "My credit card: 1234-5678-9012-3456 and password=secret123".to_string()],
-//         None,
-//         None,
-//         true, // Включаем маскирование
-//     ).await?;
 
-//     while let Some(line) = stream.next().await {
-//         match line {
-//             Ok(output) => println!("{}", output),
-//             Err(e) => eprintln!("Error: {}", e),
-//         }
-//     }
 
-//     // Пример 2: IsolateExecuter с изолированным окружением
-//     println!("\n=== IsolateExecuter with Environment Example ===");
-//     let mut isolated_env = HashMap::new();
-//     isolated_env.insert("SECRET_TOKEN".to_string(), "token=very_secret_token".to_string());
-    
-//     let isolated_executer = IsolateExecuter::new(
-//         Some(collection),
-//         logger,
-//         isolated_env,
-//     );
+fn setup_logger() -> Logger {
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    Logger::root(drain, o!())
+}
 
-//     // Выполняем команду в изолированном окружении
-//     let mut stream = isolated_executer.execute_stream(
-//         vec!["sh".to_string(), "-c".to_string(), "echo \"$SECRET_TOKEN\"".to_string()],
-//         None,
-//         None,
-//         true, // Включаем маскирование
-//     ).await?;
-
-//     while let Some(line) = stream.next().await {
-//         match line {
-//             Ok(output) => println!("{}", output),
-//             Err(e) => eprintln!("Error: {}", e),
-//         }
-//     }
-
-//     Ok(())
+// fn create_processor() -> Collection {
+//     Collection::new(processors)
 // }
 
-fn main() {
-    println!("asd")
+fn setup_aws_credentials() -> HashMap<String, String> {
+    let mut env = HashMap::new();
+    env.insert("AWS_ACCESS_KEY_ID".to_string(), "test-key".to_string());
+    env.insert("AWS_SECRET_ACCESS_KEY".to_string(), "test-secret".to_string());
+    env
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let env = setup_aws_credentials();
+    let provider = AWSProvider::new(env.clone());
+
+
+    let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
+    let equal_processor = MaskerEqual::new(vec!["password", "key"], "***");
+
+    let processors = vec![
+            Item::Regex(regexp_processor),
+            Item::Equal(equal_processor),
+        ];
+
+//provider.get_predefined_masked_objects()
+    let logger = setup_logger();
+    let processor = Collection::new(processors);
+
+    // Путь к terraform может быть получен из переменных окружения или конфигурации
+    let terraform_path = PathBuf::from("/usr/local/bin/terraform");
+
+    let executor = TerraformExecutor::new(
+        processor,
+        logger.clone(),
+        terraform_path,
+    );
+
+    // Директория с terraform конфигурацией
+    let tf_dir = PathBuf::from("/Users/igoss/Desktop/person/terraform/provisioners/infra");
+
+    // Переменные для terraform
+    let mut vars = HashMap::new();
+
+
+    // Запускаем plan
+    let plan_result = executor.plan(
+        tf_dir,
+        vars,
+        Some(PathBuf::from("/tmp/1terraform.plan")), // Опционально сохраняем план в файл
+    ).await?;
+
+    if plan_result == 0 {
+        println!("Terraform plan completed successfully!");
+    } else {
+        eprintln!("Terraform plan failed with exit code: {}", plan_result);
+    }
+
+    Ok(())
 }

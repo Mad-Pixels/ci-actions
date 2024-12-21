@@ -15,7 +15,8 @@ thiserror = "1.0"
 async-stream = "0.3"
 processor = { path = "../pkgs/core/processor" }
 executer = { path = "../pkgs/core/executer"}
-
+terraform = { path = "../pkgs/terraform"}
+provider = { path = "../pkgs/core/provider" }
 
 
 [dev-dependencies]
