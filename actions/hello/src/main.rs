@@ -45,6 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Переменные для terraform
     let mut vars = HashMap::new();
     
+
     // Запускаем plan
     let plan_result = executor
         .plan(

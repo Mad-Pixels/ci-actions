@@ -1,16 +1,57 @@
-use crate::context::Context;
-use crate::error::ExecuterError;
-use crate::validate::traits::ValidationRule;
+use crate::{Context, ExecuterError, ValidationRule};
 
+/// A validation rule that ensures environment variables have valid names and values.
+///
+/// The `EnvRule` checks that each environment variable has a non-empty name and value.
 pub struct EnvRule;
 
 impl EnvRule {
+    /// Creates a new `EnvRule`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use executer::validate::rules::EnvRule;
+    ///
+    /// let rule = EnvRule::new();
+    /// ```
     pub fn new() -> Self {
         Self
     }
 }
 
 impl ValidationRule for EnvRule {
+    /// Validates the environment variables in the context.
+    ///
+    /// Ensures that each environment variable has a non-empty name and value.
+    ///
+    /// # Arguments
+    ///
+    /// * `context` - The context containing the environment variables to validate.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `ValidationError` if any environment variable has an empty name or value.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use executer::{ValidationRule, Context, ExecuterError};
+    /// use executer::validate::rules::EnvRule;
+    /// use std::collections::HashMap;
+    /// 
+    /// let rule = EnvRule::new();
+    ///
+    /// let mut valid_env = HashMap::new();
+    /// valid_env.insert("PATH".to_string(), "/usr/bin".to_string());
+    /// let valid_context = Context::new(vec!["echo".to_string()], valid_env, None);
+    /// assert!(rule.validate(&valid_context).is_ok());
+    ///
+    /// let mut invalid_env = HashMap::new();
+    /// invalid_env.insert("".to_string(), "value".to_string());
+    /// let invalid_context = Context::new(vec!["echo".to_string()], invalid_env, None);
+    /// assert!(rule.validate(&invalid_context).is_err());
+    /// ```
     fn validate(&self, context: &Context) -> Result<(), ExecuterError> {
         for (key, value) in &context.env {
             if key.trim().is_empty() {
@@ -28,10 +69,34 @@ impl ValidationRule for EnvRule {
         Ok(())
     }
 
+    /// Returns the name of the validation rule.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use executer::validate::rules::EnvRule;
+    /// use executer::ValidationRule;
+    ///
+    /// let rule = EnvRule::new();
+    /// assert_eq!(rule.name(), "environment");
+    /// ```
     fn name(&self) -> &'static str {
         "environment"
     }
 
+    /// Returns the priority of the validation rule.
+    ///
+    /// Lower numbers indicate higher priority.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use executer::validate::rules::EnvRule;
+    /// use executer::ValidationRule;
+    ///
+    /// let rule = EnvRule::new();
+    /// assert_eq!(rule.priority(), 2);
+    /// ```
     fn priority(&self) -> i32 {
         2
     }

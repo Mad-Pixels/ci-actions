@@ -1,15 +1,14 @@
-mod rules;
-mod traits;
-mod validator;
+pub mod validator;
+pub mod traits;
+pub mod rules;
 
-pub use rules::{CmdRule, EnvRule, PathRule};
-pub use traits::ValidationRule;
 pub use validator::Validator;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::context::Context;
+    
     use std::collections::HashMap;
     use std::path::PathBuf;
 

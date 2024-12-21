@@ -36,7 +36,7 @@ impl Output {
     ///
     /// ```rust
     /// use processor::{maskers::regex::MaskerRegex, Collection, Item};
-    /// use executer::output::{Output, Target};
+    /// use executer::{Output, Target};
     /// use slog::{Logger, o};
     ///
     /// fn create_processor() -> Collection {
