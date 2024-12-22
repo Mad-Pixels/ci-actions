@@ -14,8 +14,12 @@ pub enum ConfigError {
 impl fmt::Display for ConfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConfigError::RequiredValueMissing(key) => write!(f, "Required value missing for: {}", key),
-            ConfigError::EnvVarMissing(var) => write!(f, "Required environment variable missing: {}", var),
+            ConfigError::RequiredValueMissing(key) => {
+                write!(f, "Required value missing for: {}", key)
+            }
+            ConfigError::EnvVarMissing(var) => {
+                write!(f, "Required environment variable missing: {}", var)
+            }
             ConfigError::InvalidValue(msg) => write!(f, "Invalid value: {}", msg),
         }
     }

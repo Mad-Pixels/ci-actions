@@ -27,10 +27,10 @@ impl TerraformExecutor {
     /// use provider::{AWSProvider, Provider};
     /// use std::collections::HashMap;
     /// use std::path::PathBuf;
-    /// 
+    ///
     /// let env = HashMap::new();
     /// let provider = AWSProvider::new(env.clone());
-    /// 
+    ///
     /// let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
     /// let processors = vec![ProcessorItem::Regex(regexp_processor)];
     ///  
@@ -66,12 +66,12 @@ impl TerraformExecutor {
     /// use std::path::PathBuf;
     /// use terraform::error::TerraformError;
     /// use terraform::executor::TerraformExecutor;
-    /// 
+    ///
     /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
     /// use provider::{AWSProvider, Provider};
     /// use std::collections::HashMap;
-    /// 
-    /// 
+    ///
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), TerraformError> {
     ///     let env = HashMap::new();
@@ -79,7 +79,7 @@ impl TerraformExecutor {
     ///     
     ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
     ///     let processors = vec![ProcessorItem::Regex(regexp_processor)];
-    /// 
+    ///
     ///     let processor = ProcessorCollection::new(processors);
     ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
     ///     let executor = TerraformExecutor::new(processor, terraform_path);
@@ -126,11 +126,11 @@ impl TerraformExecutor {
     /// use std::path::PathBuf;
     /// use terraform::error::TerraformError;
     /// use terraform::executor::TerraformExecutor;
-    /// 
+    ///
     /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
     /// use provider::{AWSProvider, Provider};
     /// use std::collections::HashMap;
-    /// 
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), TerraformError> {
     ///     let env = HashMap::new();
@@ -138,7 +138,7 @@ impl TerraformExecutor {
     ///     
     ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
     ///     let processors = vec![ProcessorItem::Regex(regexp_processor)];
-    /// 
+    ///
     ///     let processor = ProcessorCollection::new(processors);
     ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
     ///     let executor = TerraformExecutor::new(processor, terraform_path);
@@ -174,11 +174,11 @@ impl TerraformExecutor {
     /// use std::path::PathBuf;
     /// use terraform::error::TerraformError;
     /// use terraform::executor::TerraformExecutor;
-    /// 
+    ///
     /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
     /// use provider::{AWSProvider, Provider};
     /// use std::collections::HashMap;
-    /// 
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), TerraformError> {
     ///     let env = HashMap::new();
@@ -186,7 +186,7 @@ impl TerraformExecutor {
     ///     
     ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
     ///     let processors = vec![ProcessorItem::Regex(regexp_processor)];
-    /// 
+    ///
     ///     let processor = ProcessorCollection::new(processors);
     ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
     ///     let executor = TerraformExecutor::new(processor, terraform_path);
@@ -221,11 +221,11 @@ impl TerraformExecutor {
     /// use terraform::executor::TerraformExecutor;
     /// use terraform::error::TerraformError;
     /// use std::path::PathBuf;
-    /// 
+    ///
     /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
     /// use provider::{AWSProvider, Provider};
     /// use std::collections::HashMap;
-    /// 
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), TerraformError> {
     ///     let env = HashMap::new();
@@ -233,7 +233,7 @@ impl TerraformExecutor {
     ///     
     ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
     ///     let processors = vec![ProcessorItem::Regex(regexp_processor)];
-    /// 
+    ///
     ///     let processor = ProcessorCollection::new(processors);
     ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
     ///     let executor = TerraformExecutor::new(processor, terraform_path);
@@ -270,15 +270,15 @@ impl TerraformExecutor {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use terraform::executor::TerraformExecutor; 
+    /// use terraform::executor::TerraformExecutor;
     /// use terraform::command::WorkspaceOperation;
     /// use terraform::error::TerraformError;
     /// use std::path::PathBuf;
-    /// 
+    ///
     /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
     /// use provider::{AWSProvider, Provider};
     /// use std::collections::HashMap;
-    /// 
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), TerraformError> {
     ///     let env = HashMap::new();
@@ -286,7 +286,7 @@ impl TerraformExecutor {
     ///     
     ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
     ///     let processors = vec![ProcessorItem::Regex(regexp_processor)];
-    /// 
+    ///
     ///     let processor = ProcessorCollection::new(processors);
     ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
     ///     let executor = TerraformExecutor::new(processor, terraform_path);

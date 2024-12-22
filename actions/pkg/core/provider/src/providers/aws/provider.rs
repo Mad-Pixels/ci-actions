@@ -131,23 +131,23 @@ impl Provider for AWSProvider {
     }
 
     /// Cleans up provider-specific environment variables.
-    /// 
+    ///
     /// This method removes all environment variables used by the AWS provider.
-    /// It's useful for cleaning up the environment after tests or when 
+    /// It's useful for cleaning up the environment after tests or when
     /// switching between different cloud providers.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```rust
     /// use provider::{AWSProvider, Provider};
     /// use std::collections::HashMap;
     /// use std::env;
-    /// 
+    ///
     /// // Set environment variables
     /// env::set_var("AWS_ACCESS_KEY_ID", "test-key");
-    /// 
+    ///
     /// let aws_provider = AWSProvider::new(HashMap::new());
-    /// 
+    ///
     /// // Clean up
     /// aws_provider.clean();
     /// assert!(env::var("AWS_ACCESS_KEY_ID").is_err());
@@ -185,7 +185,9 @@ impl Provider for AWSProvider {
     }
 
     /// Return Provider name.
-    fn name(&self) -> String { "AWS".to_string() }
+    fn name(&self) -> String {
+        "AWS".to_string()
+    }
 }
 
 #[cfg(test)]
@@ -244,7 +246,7 @@ mod tests {
         let env = create_test_env();
         let aws: Box<dyn Provider> = Box::new(AWSProvider::new(env));
         let values = aws.values();
-    
+
         assert_eq!(values.len(), 2);
         assert!(values.contains(&"key"));
         assert!(values.contains(&"secret"));

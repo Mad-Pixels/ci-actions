@@ -1,4 +1,4 @@
-use crate::{ProcessorItem, Processor};
+use crate::{Processor, ProcessorItem};
 
 /// Collection of processors that are applied sequentially.
 ///

@@ -8,7 +8,7 @@ use terraform::executor::TerraformExecutor;
 
 // fn create_processor() -> Collection {
 //     Collection::new(processors)
-// } 
+// }
 
 fn setup_aws_credentials() -> HashMap<String, String> {
     let mut env = HashMap::new();
@@ -47,7 +47,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Переменные для terraform
     let mut vars = HashMap::new();
-
 
     // Запускаем plan
     let plan_result = executor

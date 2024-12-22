@@ -59,7 +59,7 @@ impl ConfigValue<Required> {
             Ok(val) => val.parse::<T>().map_err(|_| {
                 ConfigError::InvalidValue(format!("Cannot parse value for: {}", self.env_key))
             }),
-            Err(_) => Err(ConfigError::RequiredValueMissing(self.env_key.to_string()))
+            Err(_) => Err(ConfigError::RequiredValueMissing(self.env_key.to_string())),
         }
     }
 }

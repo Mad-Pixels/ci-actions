@@ -40,10 +40,10 @@
 //!     // Retrieve predefined masked objects
 //!     let masked_objects = aws_provider.get_predefined_masked_objects();
 //!     println!("Masked Patterns: {:?}", masked_objects);
-//! 
+//!
 //!     // Retrieve provider name
 //!     println!("Provider: {}", aws_provider.name());
-//! 
+//!
 //!     // Remove creadentials from environment variables
 //!     aws_provider.clean();
 //!
@@ -51,12 +51,12 @@
 //! }
 //! ```
 
+mod error;
 mod providers;
 mod traits;
-mod error;
 
-use std::{collections::HashMap, env};
 use crate::providers::aws::constants::REQUIRED_ENV_VARS;
+use std::{collections::HashMap, env};
 
 pub use error::{ProviderError, ProviderResult};
 pub use providers::aws::AWSProvider;
@@ -84,14 +84,16 @@ pub use traits::Provider;
 pub fn auto_detect() -> ProviderResult<Box<dyn Provider>> {
     let env_vars: HashMap<String, String> = env::vars().collect();
 
-    let has_aws = REQUIRED_ENV_VARS.iter()
+    let has_aws = REQUIRED_ENV_VARS
+        .iter()
         .all(|var| env_vars.contains_key(*var));
 
     if has_aws {
         let filtered_vars: HashMap<String, String> = REQUIRED_ENV_VARS
             .iter()
             .filter_map(|&key| {
-                env_vars.get(key)
+                env_vars
+                    .get(key)
                     .map(|value| (key.to_string(), value.to_string()))
             })
             .collect();
@@ -110,8 +112,8 @@ pub fn auto_detect() -> ProviderResult<Box<dyn Provider>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::env;
     use std::collections::HashMap;
+    use std::env;
 
     fn cleanup_env() {
         env::remove_var("AWS_ACCESS_KEY_ID");
@@ -181,20 +183,20 @@ mod tests {
     #[test]
     fn test_auto_detect_aws() {
         cleanup_env();
-        
+
         env::set_var("AWS_ACCESS_KEY_ID", "test-key");
         env::set_var("AWS_SECRET_ACCESS_KEY", "test-secret");
 
         let provider = auto_detect().expect("Should detect AWS provider");
         assert!(provider.validate().is_ok());
-        
+
         cleanup_env();
     }
 
     #[test]
     fn test_auto_detect_none() {
         cleanup_env();
-        
+
         match auto_detect() {
             Err(ProviderError::ProviderNotFound) => (),
             _ => panic!("Should return ProviderNotFound when no provider detected"),
@@ -204,7 +206,7 @@ mod tests {
     #[test]
     fn test_auto_detect_partial_aws() {
         cleanup_env();
-        
+
         env::set_var("AWS_ACCESS_KEY_ID", "test-key");
         // Missing AWS_SECRET_ACCESS_KEY
 
@@ -212,7 +214,7 @@ mod tests {
             Err(ProviderError::ProviderNotFound) => (),
             _ => panic!("Should return ProviderNotFound when AWS credentials are incomplete"),
         }
-        
+
         cleanup_env();
     }
 }

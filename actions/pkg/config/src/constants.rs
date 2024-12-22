@@ -1,5 +1,5 @@
-use crate::value::ConfigValue;
 use crate::error::Required;
+use crate::value::ConfigValue;
 
 use lazy_static::lazy_static;
 use std::path::PathBuf;
@@ -10,7 +10,7 @@ pub const ENV_MASK: &str = "ACTION_MASK";
 pub const ENV_LOG_LEVEL: &str = "ACTION_LOG_LEVEL";
 pub const ENV_WORKING_DIR: &str = "ACTION_WORKING_DIR";
 
-// ENV keys: terraform 
+// ENV keys: terraform
 pub const ENV_TERRAFORM_BIN: &str = "ACTION_TERRAFORM_PATH";
 pub const ENV_TERRAFORM_OUUTPUT: &str = "ACTION_TERRAFORM_OUTPUT";
 pub const ENV_TERRAFORM_WORKSPACE: &str = "ACTION_TERRAFORM_WORKSPACE";
@@ -33,7 +33,7 @@ lazy_static! {
         ENV_TERRAFORM_WORKSPACE
     );
     pub static ref TERRAFORM_OUTPUT: ConfigValue<PathBuf> = ConfigValue::new(
-        PathBuf::from(DEFAULT_TERRAFORM_OUTPUT), 
+        PathBuf::from(DEFAULT_TERRAFORM_OUTPUT),
         ENV_TERRAFORM_OUUTPUT
     );
 
@@ -49,11 +49,11 @@ lazy_static! {
 
     pub static ref LOG_LEVEL: ConfigValue<String> = ConfigValue::new(
         DEFAULT_LOG_LEVEL.to_string(),
-        ENV_LOG_LEVEL 
+        ENV_LOG_LEVEL
     );
 
     pub static ref MASK: ConfigValue<String> = ConfigValue::new(
-        DEFAULT_MASK.to_string(), 
+        DEFAULT_MASK.to_string(),
         ENV_MASK
     );
 }

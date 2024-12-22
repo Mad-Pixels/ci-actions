@@ -5,7 +5,7 @@ mod writer;
 pub use types::Target;
 
 use formatter::PlainFormatter;
-use processor::{ProcessorCollection, Processor};
+use processor::{Processor, ProcessorCollection};
 use slog::{o, Drain, Logger};
 use writer::Writer;
 
@@ -46,7 +46,11 @@ impl Output {
     ///
     /// let output = Output::new(create_processor(), Target::Stdout, Target::Stderr);
     /// ```
-    pub fn new(processor: ProcessorCollection, output_target: Target, error_target: Target) -> Self {
+    pub fn new(
+        processor: ProcessorCollection,
+        output_target: Target,
+        error_target: Target,
+    ) -> Self {
         let drain = slog_async::Async::new(PlainFormatter.fuse()).build().fuse();
 
         Self {

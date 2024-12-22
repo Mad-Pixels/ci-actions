@@ -1,4 +1,4 @@
-use slog::{Drain, Logger, Level, o};
+use slog::{o, Drain, Level, Logger};
 use slog_async;
 use slog_term;
 

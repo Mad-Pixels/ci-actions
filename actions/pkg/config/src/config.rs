@@ -1,5 +1,5 @@
-use crate::error::ConfigResult;
 use crate::constants::*;
+use crate::error::ConfigResult;
 
 use std::path::PathBuf;
 
@@ -46,7 +46,7 @@ mod tests {
         env::remove_var("ACTION_WORKING_DIR");
     }
 
-    #[test] 
+    #[test]
     fn test_get_terraform_bin_default() {
         cleanup_env();
         let config = Config::new();
@@ -68,7 +68,7 @@ mod tests {
         cleanup_env();
         let config = Config::new();
         assert!(config.get_cmd().is_err());
-        
+
         env::set_var("ACTION_CMD", "plan");
         assert_eq!(config.get_cmd().unwrap(), "plan");
     }

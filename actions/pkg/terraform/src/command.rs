@@ -75,7 +75,7 @@ impl TerraformCommand {
     /// use std::path::PathBuf;
     /// use std::collections::HashMap;
     /// use terraform::command::TerraformCommand;
-    /// 
+    ///
     /// let init_command = TerraformCommand::Init {
     ///     dir: PathBuf::from("/path/to/dir"),
     ///     backend_config: Some(HashMap::from([
@@ -83,7 +83,7 @@ impl TerraformCommand {
     ///         ("key2".to_string(), "value2".to_string()),
     ///     ])),
     /// };
-    /// 
+    ///
     /// let args = init_command.to_args();
     /// assert_eq!(
     ///     args,
@@ -104,7 +104,7 @@ impl TerraformCommand {
                 if let Some(config) = backend_config {
                     let mut keys: Vec<_> = config.keys().collect();
                     keys.sort();
- 
+
                     for key in keys {
                         if let Some(value) = config.get(key) {
                             args.push(format!("-backend-config={}={}", key, value));
@@ -115,10 +115,10 @@ impl TerraformCommand {
             }
             Self::Plan { dir: _, vars, out } => {
                 let mut args = vec!["plan".to_string()];
-                
+
                 let mut var_keys: Vec<_> = vars.keys().collect();
                 var_keys.sort();
-                
+
                 for key in var_keys {
                     if let Some(value) = vars.get(key) {
                         args.push(format!("-var={}={}", key, value));
@@ -165,4 +165,4 @@ impl TerraformCommand {
             }
         }
     }
- }
+}
