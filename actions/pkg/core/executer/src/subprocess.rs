@@ -605,4 +605,35 @@ mod tests {
         let content = fs::read_to_string(output_path).unwrap();
         assert!(!content.contains("TEST_VAR"));
     }
+
+    #[tokio::test]
+    async fn test_stdin_is_null() {
+        use std::collections::HashMap;
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+        let output_path = temp_dir.path().join("output.log");
+
+        let output = Output::new(
+            create_processor(),
+            Target::File(output_path.clone()),
+            Target::File(output_path.clone()),
+        );
+        let validator = Validator::default();
+        let subprocess = Subprocess::new(output, validator);
+
+        #[cfg(unix)]
+        let cmd = "read var";
+        #[cfg(windows)]
+        let cmd = "pause";
+
+        let context = Context::new(build_command(cmd), HashMap::new(), None)
+            .with_timeout(2);
+        let status = subprocess
+            .execute(context)
+            .await
+            .expect("Failed to run command that reads from stdin");
+        assert_ne!(
+            status, 0,
+            "Process that attempts to read from stdin should not exit with code 0"
+        );
+    }
 }
