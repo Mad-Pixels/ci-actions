@@ -1,6 +1,5 @@
 use config::Config;
 use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
-use slog::{debug, error, info};
 use std::collections::HashMap;
 use terraform::executor::TerraformExecutor;
 
@@ -10,33 +9,43 @@ use util::init_logger;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::new();
-
+    
     let level = config.get_log_level().unwrap_or("info".to_string());
-    let logger = init_logger(&level);
+    let logger = init_logger("info");
 
+    
     let provider = match auto_detect() {
         Ok(provider) => provider,
         Err(e) => {
-            error!(logger, "Failed to detect provider"; "error" => format!("{}", e));
-            std::process::exit(1);
+    // или более структурированный вариант:
+    slog::error!(logger, "Failed to detect provider: {}", e);
+    let error_str = e.to_string();
+    slog::error!(logger, "Failed to detect provider"; 
+        "error" => e.to_string()
+    );
+    
+
+    std::process::exit(1);
+            
         }
     };
-    debug!(logger, "Initialize action with {}", provider.name());
+    slog::debug!(logger, "Initialize action with {}", provider.name());
 
     let output = config.get_terraform_output().unwrap();
     let bin = config.get_terraform_bin().unwrap();
     let cwd = config.get_working_dir().unwrap();
     let mask = config.get_mask().unwrap();
     let cmd = config.get_cmd().unwrap();
-    debug!(
+    slog::debug!(
         logger,
         "config bin: {:?}, cwd: {:?}, cmd: {}, mask: {}, output: {:?}", bin, cwd, cmd, mask, output,
     );
+    
 
     let mask_provider = match MaskerRegex::new(provider.get_predefined_masked_objects(), &mask) {
         Ok(masker) => masker,
         Err(e) => {
-            error!(logger, "Failed initialize regex maskers"; "error" => e.to_string());
+            slog::error!(logger, "Failed initialize regex maskers"; "error" => e.to_string());
             std::process::exit(1);
         }
     };
@@ -47,14 +56,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ProcessorItem::Equal(mask_creds),
     ]);
 
-    info!(logger, "action was initialized");
+    slog::info!(logger, "action was initialized");
     let executor = TerraformExecutor::new(processors, bin);
 
-    let result = executor.plan(cwd, HashMap::new(), Some(output)).await?;
+    let mut vars = HashMap::new();
+    
+    print!("{:?}", cwd);
+    let result = executor.plan(cwd, vars, Some(output)).await?;
     if result == 0 {
-        info!(logger, "Plan was finished");
+        slog::info!(logger, "Plan was finished");
     } else {
-        error!(logger, "Plan was failed, status: {}", result);
+        slog::error!(logger, "Plan was failed, status: {}", result);
     }
 
     Ok(())

@@ -16,10 +16,31 @@ pub fn init_logger(level: &str) -> Logger {
         }
     };
 
-    let decorator = slog_term::TermDecorator::new().build();
-    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
-    let drain = slog::LevelFilter::new(drain, log_level).fuse();
-    let drain = slog_async::Async::new(drain).build().fuse();
+    println!("Initializing logger with level: {:?}", log_level);  // Проверка уровня
 
-    Logger::root(drain, o!())
+    let decorator = slog_term::TermDecorator::new()
+        .force_color()  // Добавим принудительное включение цвета
+        .build();
+    
+    let drain = slog_term::CompactFormat::new(decorator)
+        .build()
+        .fuse();
+    
+    let drain = slog::LevelFilter::new(drain, log_level).fuse();
+    let drain = slog_async::Async::new(drain)
+        .build()
+        .fuse();
+
+    let logger = Logger::root(drain, o!());
+
+    // Проверим все уровни логирования
+    slog::trace!(&logger, "Test trace message");
+    slog::debug!(&logger, "Test debug message");
+    slog::info!(&logger, "Test info message");
+    slog::warn!(&logger, "Test warning message");
+    slog::error!(&logger, "Test error message"; "error" => "test error");
+
+    println!("Logger initialization complete");
+
+    logger
 }
