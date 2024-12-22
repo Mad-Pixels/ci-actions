@@ -1,15 +1,43 @@
 use crate::command::{TerraformCommand, WorkspaceOperation};
 use crate::error::{TerraformError, TerraformResult};
+
 use executer::{Context, Output, Subprocess, Target, Validator};
 use processor::MaskerCollection;
 use std::path::PathBuf;
 
+/// Executor responsible for running Terraform commands.
 pub struct TerraformExecutor {
     subprocess: Subprocess,
     terraform_path: PathBuf,
 }
 
 impl TerraformExecutor {
+    /// Creates a new instance of `TerraformExecutor`.
+    ///
+    /// # Arguments
+    ///
+    /// * `processor` - A collection of maskers for processing output.
+    /// * `terraform_path` - The path to the Terraform executable.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use terraform::executor::TerraformExecutor;
+    /// use provider::{AWSProvider, Provider};
+    /// use std::collections::HashMap;
+    /// use std::path::PathBuf;
+    /// 
+    /// let env = HashMap::new();
+    /// let provider = AWSProvider::new(env.clone());
+    /// 
+    /// let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
+    /// let processors = vec![MaskerItem::Regex(regexp_processor)];
+    ///  
+    /// let processor = MaskerCollection::new(processors);
+    /// let terraform_path = PathBuf::from("/usr/local/bin/terraform");
+    /// let executor = TerraformExecutor::new(processor, terraform_path);
+    /// ```
     pub fn new(processor: MaskerCollection, terraform_path: PathBuf) -> Self {
         let output = Output::new(processor, Target::Stdout, Target::Stderr);
 
@@ -22,6 +50,45 @@ impl TerraformExecutor {
         }
     }
 
+    /// Executes a given Terraform command asynchronously.
+    ///
+    /// # Arguments
+    ///
+    /// * `command` - The `TerraformCommand` to execute.
+    ///
+    /// # Returns
+    ///
+    /// * `TerraformResult<i32>` - The result of the command execution containing the exit code.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use std::path::PathBuf;
+    /// use terraform::error::TerraformError;
+    /// use terraform::executor::TerraformExecutor;
+    /// 
+    /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use provider::{AWSProvider, Provider};
+    /// use std::collections::HashMap;
+    /// 
+    /// 
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), TerraformError> {
+    ///     let env = HashMap::new();
+    ///     let provider = AWSProvider::new(env.clone());
+    ///     
+    ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
+    ///     let processors = vec![MaskerItem::Regex(regexp_processor)];
+    /// 
+    ///     let processor = MaskerCollection::new(processors);
+    ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
+    ///     let executor = TerraformExecutor::new(processor, terraform_path);
+    ///     
+    ///     let backend_config = HashMap::from([("key".to_string(), "value".to_string())]);
+    ///     executor.init(PathBuf::from("/path/to/dir"), Some(backend_config)).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub async fn execute(&self, command: TerraformCommand) -> TerraformResult<i32> {
         let args = command.to_args();
         let working_dir = match &command {
@@ -46,6 +113,41 @@ impl TerraformExecutor {
             .map_err(TerraformError::from)
     }
 
+    /// Initializes a Terraform working directory.
+    ///
+    /// # Arguments
+    ///
+    /// * `dir` - The directory to initialize.
+    /// * `backend_config` - Optional backend configuration parameters.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use std::path::PathBuf;
+    /// use terraform::error::TerraformError;
+    /// use terraform::executor::TerraformExecutor;
+    /// 
+    /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use provider::{AWSProvider, Provider};
+    /// use std::collections::HashMap;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), TerraformError> {
+    ///     let env = HashMap::new();
+    ///     let provider = AWSProvider::new(env.clone());
+    ///     
+    ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
+    ///     let processors = vec![MaskerItem::Regex(regexp_processor)];
+    /// 
+    ///     let processor = MaskerCollection::new(processors);
+    ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
+    ///     let executor = TerraformExecutor::new(processor, terraform_path);
+    ///     
+    ///     let backend_config = HashMap::from([("key".to_string(), "value".to_string())]);
+    ///     executor.init(PathBuf::from("/path/to/dir"), Some(backend_config)).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub async fn init(
         &self,
         dir: PathBuf,
@@ -58,6 +160,43 @@ impl TerraformExecutor {
         .await
     }
 
+    /// Creates an execution plan.
+    ///
+    /// # Arguments
+    ///
+    /// * `dir` - The directory where the plan is created.
+    /// * `vars` - Variables to pass to the Terraform configuration.
+    /// * `out` - Optional path to save the generated plan.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use std::path::PathBuf;
+    /// use terraform::error::TerraformError;
+    /// use terraform::executor::TerraformExecutor;
+    /// 
+    /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use provider::{AWSProvider, Provider};
+    /// use std::collections::HashMap;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), TerraformError> {
+    ///     let env = HashMap::new();
+    ///     let provider = AWSProvider::new(env.clone());
+    ///     
+    ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
+    ///     let processors = vec![MaskerItem::Regex(regexp_processor)];
+    /// 
+    ///     let processor = MaskerCollection::new(processors);
+    ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
+    ///     let executor = TerraformExecutor::new(processor, terraform_path);
+    ///     
+    ///     let vars = HashMap::from([("instance_type".to_string(), "t2.micro".to_string())]);
+    ///     let plan_path = Some(PathBuf::from("/path/to/plan.out"));
+    ///     executor.plan(PathBuf::from("/path/to/dir"), vars, plan_path).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub async fn plan(
         &self,
         dir: PathBuf,
@@ -68,6 +207,45 @@ impl TerraformExecutor {
             .await
     }
 
+    /// Applies the changes required to reach the desired state.
+    ///
+    /// # Arguments
+    ///
+    /// * `dir` - The directory where the apply is executed.
+    /// * `plan_file` - Optional path to a pre-generated plan file.
+    /// * `auto_approve` - Automatically approve the plan without prompting.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use terraform::executor::TerraformExecutor;
+    /// use terraform::error::TerraformError;
+    /// use std::path::PathBuf;
+    /// 
+    /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use provider::{AWSProvider, Provider};
+    /// use std::collections::HashMap;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), TerraformError> {
+    ///     let env = HashMap::new();
+    ///     let provider = AWSProvider::new(env.clone());
+    ///     
+    ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
+    ///     let processors = vec![MaskerItem::Regex(regexp_processor)];
+    /// 
+    ///     let processor = MaskerCollection::new(processors);
+    ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
+    ///     let executor = TerraformExecutor::new(processor, terraform_path);
+    ///     
+    ///     executor.apply(
+    ///         PathBuf::from("/path/to/dir"),
+    ///         Some(PathBuf::from("/path/to/plan.out")),
+    ///         true,
+    ///     ).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub async fn apply(
         &self,
         dir: PathBuf,
@@ -82,6 +260,44 @@ impl TerraformExecutor {
         .await
     }
 
+    /// Manages Terraform workspaces.
+    ///
+    /// # Arguments
+    ///
+    /// * `dir` - The directory where workspace operations are performed.
+    /// * `operation` - The workspace operation to execute.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use terraform::executor::TerraformExecutor; 
+    /// use terraform::command::WorkspaceOperation;
+    /// use terraform::error::TerraformError;
+    /// use std::path::PathBuf;
+    /// 
+    /// use processor::{maskers::MaskerEqual, maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use provider::{AWSProvider, Provider};
+    /// use std::collections::HashMap;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), TerraformError> {
+    ///     let env = HashMap::new();
+    ///     let provider = AWSProvider::new(env.clone());
+    ///     
+    ///     let regexp_processor = MaskerRegex::new(provider.get_predefined_masked_objects(), "****").unwrap();
+    ///     let processors = vec![MaskerItem::Regex(regexp_processor)];
+    /// 
+    ///     let processor = MaskerCollection::new(processors);
+    ///     let terraform_path = PathBuf::from("/usr/local/bin/terraform");
+    ///     let executor = TerraformExecutor::new(processor, terraform_path);
+    ///     
+    ///     executor.workspace(
+    ///         PathBuf::from("/path/to/dir"),
+    ///         WorkspaceOperation::List,
+    ///     ).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     pub async fn workspace(
         &self,
         dir: PathBuf,

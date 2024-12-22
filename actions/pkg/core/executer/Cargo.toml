@@ -10,7 +10,7 @@ futures = "0.3"
 slog = "2.7"
 slog-term = "2.9"
 slog-async = "2.7"
-thiserror = "1.0"
+thiserror = "2.0.9"
 async-stream = "0.3"
 tokio-stream = "0.1"
 processor = { path = "../processor" }

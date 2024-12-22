@@ -1,27 +1,65 @@
+/// Defines the operations that can be performed on Terraform workspaces.
 #[derive(Debug, Clone)]
 pub enum WorkspaceOperation {
+    /// List all available workspaces.
     List,
+
+    /// Create a new workspace with the given name.
     New(String),
+
+    /// Select an existing workspace by name.
     Select(String),
+
+    /// Delete a workspace by name.
     Delete(String),
 }
 
+/// Represents the various Terraform commands that can be executed.
 #[derive(Debug, Clone)]
 pub enum TerraformCommand {
+    /// Initialize a Terraform working directory.
+    ///
+    /// # Fields
+    ///
+    /// - `dir`: The directory where Terraform is initialized.
+    /// - `backend_config`: Optional backend configuration parameters.
     Init {
         dir: std::path::PathBuf,
         backend_config: Option<std::collections::HashMap<String, String>>,
     },
+
+    /// Create an execution plan.
+    ///
+    /// # Fields
+    ///
+    /// - `dir`: The directory where the plan is created.
+    /// - `vars`: Variables to pass to the Terraform configuration.
+    /// - `out`: Optional path to save the generated plan.
     Plan {
         dir: std::path::PathBuf,
         vars: std::collections::HashMap<String, String>,
         out: Option<std::path::PathBuf>,
     },
+
+    /// Apply the changes required to reach the desired state of the configuration.
+    ///
+    /// # Fields
+    ///
+    /// - `dir`: The directory where the apply is executed.
+    /// - `plan_file`: Optional path to a plan file.
+    /// - `auto_approve`: Automatically approve the plan without prompting.
     Apply {
         dir: std::path::PathBuf,
         plan_file: Option<std::path::PathBuf>,
         auto_approve: bool,
     },
+
+    /// Manage Terraform workspaces.
+    ///
+    /// # Fields
+    ///
+    /// - `dir`: The directory where workspace operations are performed.
+    /// - `operation`: The workspace operation to execute.
     Workspace {
         dir: std::path::PathBuf,
         operation: WorkspaceOperation,
@@ -29,6 +67,33 @@ pub enum TerraformCommand {
 }
 
 impl TerraformCommand {
+    /// Converts the `TerraformCommand` into a list of command-line arguments.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::path::PathBuf;
+    /// use std::collections::HashMap;
+    /// use terraform::command::TerraformCommand;
+    /// 
+    /// let init_command = TerraformCommand::Init {
+    ///     dir: PathBuf::from("/path/to/dir"),
+    ///     backend_config: Some(HashMap::from([
+    ///         ("key1".to_string(), "value1".to_string()),
+    ///         ("key2".to_string(), "value2".to_string()),
+    ///     ])),
+    /// };
+    /// 
+    /// let args = init_command.to_args();
+    /// assert_eq!(
+    ///     args,
+    ///     vec![
+    ///         "init".to_string(),
+    ///         "-backend-config=key1=value1".to_string(),
+    ///         "-backend-config=key2=value2".to_string()
+    ///     ]
+    /// );
+    /// ```
     pub fn to_args(&self) -> Vec<String> {
         match self {
             Self::Init {
@@ -37,16 +102,29 @@ impl TerraformCommand {
             } => {
                 let mut args = vec!["init".to_string()];
                 if let Some(config) = backend_config {
-                    for (key, value) in config {
-                        args.push(format!("-backend-config={}={}", key, value));
+                    // Собираем ключи в вектор и сортируем их для стабильного порядка
+                    let mut keys: Vec<_> = config.keys().collect();
+                    keys.sort();
+ 
+                    // Добавляем backend-config в отсортированном порядке
+                    for key in keys {
+                        if let Some(value) = config.get(key) {
+                            args.push(format!("-backend-config={}={}", key, value));
+                        }
                     }
                 }
                 args
             }
             Self::Plan { dir: _, vars, out } => {
                 let mut args = vec!["plan".to_string()];
-                for (key, value) in vars {
-                    args.push(format!("-var={}={}", key, value));
+                
+                let mut var_keys: Vec<_> = vars.keys().collect();
+                var_keys.sort();
+                
+                for key in var_keys {
+                    if let Some(value) = vars.get(key) {
+                        args.push(format!("-var={}={}", key, value));
+                    }
                 }
                 if let Some(out_file) = out {
                     args.push("-out".to_string());
@@ -89,4 +167,4 @@ impl TerraformCommand {
             }
         }
     }
-}
+ }
