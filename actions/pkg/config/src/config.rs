@@ -14,12 +14,24 @@ impl Config {
         CMD.get()
     }
 
+    pub fn get_terraform_output(&self) -> ConfigResult<PathBuf> {
+        TERRAFORM_OUTPUT.get()
+    }
+
     pub fn get_terraform_bin(&self) -> ConfigResult<PathBuf> {
         TERRAFORM_BIN.get()
     }
 
     pub fn get_working_dir(&self) -> ConfigResult<PathBuf> {
         WORKING_DIR.get()
+    }
+
+    pub fn get_log_level(&self) -> ConfigResult<String> {
+        LOG_LEVEL.get()
+    }
+
+    pub fn get_mask(&self) -> ConfigResult<String> {
+        MASK.get()
     }
 }
 

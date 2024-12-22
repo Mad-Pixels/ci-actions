@@ -8,7 +8,7 @@ use terraform::executor::TerraformExecutor;
 
 // fn create_processor() -> Collection {
 //     Collection::new(processors)
-// }
+// } 
 
 fn setup_aws_credentials() -> HashMap<String, String> {
     let mut env = HashMap::new();

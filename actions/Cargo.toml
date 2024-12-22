@@ -4,6 +4,7 @@ members = [
     "bin/terraform",
 
     "hello",
+    "pkg/util",
     "pkg/config",
     "pkg/terraform",
     "pkg/core/processor",

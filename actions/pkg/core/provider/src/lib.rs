@@ -1,8 +1,7 @@
 //! # Provider Crate
 //!
 //! The `provider` crate offers implementations for various cloud providers,
-//! facilitating environment variable management, configuration validation,
-//! and masking of sensitive information.
+//! facilitating environment variable management, configuration validation.
 //!
 //! ## Modules
 //!
@@ -34,13 +33,19 @@
 //!     let environment = aws_provider.get_environment();
 //!     println!("AWS Environment: {:?}", environment);
 //!
-//!     // Retrieve sensitive variables
-//!     let sensitive = aws_provider.get_sensitive();
-//!     println!("Sensitive Variables: {:?}", sensitive);
+//!     // Retrieve environment values
+//!     let values = aws_provider.values();
+//!     println!("Sensitive Variables: {:?}", values);
 //!
 //!     // Retrieve predefined masked objects
 //!     let masked_objects = aws_provider.get_predefined_masked_objects();
 //!     println!("Masked Patterns: {:?}", masked_objects);
+//! 
+//!     // Retrieve provider name
+//!     println!("Provider: {}", aws_provider.name());
+//! 
+//!     // Remove creadentials from environment variables
+//!     aws_provider.clean();
 //!
 //!     Ok(())
 //! }
@@ -83,7 +88,14 @@ pub fn auto_detect() -> ProviderResult<Box<dyn Provider>> {
         .all(|var| env_vars.contains_key(*var));
 
     if has_aws {
-        return Ok(Box::new(AWSProvider::new(env_vars)));
+        let filtered_vars: HashMap<String, String> = REQUIRED_ENV_VARS
+            .iter()
+            .filter_map(|&key| {
+                env_vars.get(key)
+                    .map(|value| (key.to_string(), value.to_string()))
+            })
+            .collect();
+        return Ok(Box::new(AWSProvider::new(filtered_vars)));
     }
 
     // Add checks for other providers here when they are added
@@ -115,24 +127,6 @@ mod tests {
             "test-secret".to_string(),
         );
         env
-    }
-
-    #[test]
-    fn test_aws_provider_lifecycle() {
-        let env = setup_aws_credentials();
-
-        let provider = AWSProvider::new(env.clone());
-        assert!(provider.validate().is_ok());
-
-        let environment = provider.get_environment();
-        assert_eq!(environment.get("AWS_ACCESS_KEY_ID").unwrap(), "test-key");
-        assert_eq!(
-            environment.get("AWS_SECRET_ACCESS_KEY").unwrap(),
-            "test-secret"
-        );
-
-        let sensitive = provider.get_sensitive();
-        assert_eq!(sensitive, environment);
     }
 
     #[test]

@@ -82,29 +82,6 @@ impl Provider for AWSProvider {
         self.environment.clone()
     }
 
-    /// Retrieves sensitive environment variables that should be protected.
-    ///
-    /// # Returns
-    ///
-    /// A `HashMap` containing sensitive AWS environment variables as key-value pairs.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use provider::{AWSProvider, Provider};
-    /// use std::collections::HashMap;
-    ///
-    /// let mut env = HashMap::new();
-    /// env.insert("AWS_SECRET_ACCESS_KEY".to_string(), "secret".to_string());
-    ///
-    /// let aws_provider = AWSProvider::new(env.clone());
-    /// let sensitive = aws_provider.get_sensitive();
-    /// assert_eq!(sensitive.get("AWS_SECRET_ACCESS_KEY").unwrap(), "secret");
-    /// ```
-    fn get_sensitive(&self) -> HashMap<String, String> {
-        self.environment.clone()
-    }
-
     /// Retrieves predefined patterns for masking sensitive AWS resources.
     ///
     /// # Returns
@@ -180,6 +157,35 @@ impl Provider for AWSProvider {
             env::remove_var(var);
         }
     }
+
+    /// Returns all environment variable values as a vector.
+    ///
+    /// # Returns
+    ///
+    /// A `Vec<String>` containing all environment variable values.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use provider::{AWSProvider, Provider};
+    /// use std::collections::HashMap;
+    ///
+    /// let mut env = HashMap::new();
+    /// env.insert("AWS_ACCESS_KEY_ID".to_string(), "test-key".to_string());
+    /// env.insert("AWS_SECRET_ACCESS_KEY".to_string(), "test-secret".to_string());
+    ///
+    /// let provider: Box<dyn Provider> = Box::new(AWSProvider::new(env));
+    /// let values = provider.values();
+    /// assert_eq!(values.len(), 2);
+    /// assert!(values.contains(&"test-key"));
+    /// assert!(values.contains(&"test-secret"));
+    /// ```
+    fn values(&self) -> Vec<&str> {
+        self.environment.values().map(|s| s.as_str()).collect()
+    }
+
+    /// Return Provider name.
+    fn name(&self) -> String { "AWS".to_string() }
 }
 
 #[cfg(test)]
@@ -198,13 +204,6 @@ mod tests {
         let env = create_test_env();
         let aws = AWSProvider::new(env.clone());
         assert_eq!(aws.get_environment(), env);
-    }
-
-    #[test]
-    fn test_get_sensitive() {
-        let env = create_test_env();
-        let aws = AWSProvider::new(env.clone());
-        assert_eq!(aws.get_sensitive(), env);
     }
 
     #[test]
@@ -238,5 +237,16 @@ mod tests {
     fn test_clean_missing_vars() {
         let aws = AWSProvider::new(HashMap::new());
         aws.clean();
+    }
+
+    #[test]
+    fn test_values() {
+        let env = create_test_env();
+        let aws: Box<dyn Provider> = Box::new(AWSProvider::new(env));
+        let values = aws.values();
+    
+        assert_eq!(values.len(), 2);
+        assert!(values.contains(&"key"));
+        assert!(values.contains(&"secret"));
     }
 }

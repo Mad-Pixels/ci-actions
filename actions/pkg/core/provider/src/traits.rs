@@ -12,9 +12,11 @@ pub trait Provider {
 
     fn get_environment(&self) -> HashMap<String, String>;
 
-    fn get_sensitive(&self) -> HashMap<String, String>;
-
     fn validate(&self) -> ProviderResult<()>;
+
+    fn name(&self) -> String;
+
+    fn values(&self) -> Vec<&str>;
 
     fn clean(&self) {}
 }
