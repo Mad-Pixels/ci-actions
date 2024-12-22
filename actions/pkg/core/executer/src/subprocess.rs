@@ -112,7 +112,8 @@ impl Subprocess {
         command
             .args(&context.command[1..])
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
+            .stderr(Stdio::piped())
+            .stdin(Stdio::null());
         if let Some(path) = &context.cwd {
             command.current_dir(path);
         }
