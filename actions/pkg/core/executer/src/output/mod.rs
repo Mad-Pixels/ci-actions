@@ -5,7 +5,7 @@ mod writer;
 pub use types::Target;
 
 use formatter::PlainFormatter;
-use processor::{MaskerCollection, Processor};
+use processor::{ProcessorCollection, Processor};
 use slog::{o, Drain, Logger};
 use writer::Writer;
 
@@ -16,7 +16,7 @@ use writer::Writer;
 /// such as files or standard output/error streams.
 #[derive(Clone)]
 pub struct Output {
-    processor: MaskerCollection,
+    processor: ProcessorCollection,
     output_target: Target,
     error_target: Target,
     logger: Logger,
@@ -35,18 +35,18 @@ impl Output {
     /// # Example
     ///
     /// ```rust
-    /// use processor::{maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use processor::{maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
     /// use executer::{Output, Target};
     /// use slog::{Logger, o};
     ///
-    /// fn create_processor() -> MaskerCollection {
+    /// fn create_processor() -> ProcessorCollection {
     ///     let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
-    ///     MaskerCollection::new(vec![MaskerItem::Regex(masker)])
+    ///     ProcessorCollection::new(vec![ProcessorItem::Regex(masker)])
     /// }
     ///
     /// let output = Output::new(create_processor(), Target::Stdout, Target::Stderr);
     /// ```
-    pub fn new(processor: MaskerCollection, output_target: Target, error_target: Target) -> Self {
+    pub fn new(processor: ProcessorCollection, output_target: Target, error_target: Target) -> Self {
         let drain = slog_async::Async::new(PlainFormatter.fuse()).build().fuse();
 
         Self {
@@ -67,13 +67,13 @@ impl Output {
     /// # Example
     ///
     /// ```rust
-    /// use processor::{maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use processor::{maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
     /// use executer::{Output, Target};
     /// use slog::{Logger, o};
     ///
-    /// fn create_processor() -> MaskerCollection {
+    /// fn create_processor() -> ProcessorCollection {
     ///     let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
-    ///     MaskerCollection::new(vec![MaskerItem::Regex(masker)])
+    ///     ProcessorCollection::new(vec![ProcessorItem::Regex(masker)])
     /// }
     ///
     /// let output = Output::new(create_processor(), Target::Stdout, Target::Stderr);
@@ -94,13 +94,13 @@ impl Output {
     /// # Example
     ///
     /// ```rust
-    /// use processor::{maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    /// use processor::{maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
     /// use executer::{Output, Target};
     /// use slog::{Logger, o};
     ///
-    /// fn create_processor() -> MaskerCollection {
+    /// fn create_processor() -> ProcessorCollection {
     ///     let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
-    ///     MaskerCollection::new(vec![MaskerItem::Regex(masker)])
+    ///     ProcessorCollection::new(vec![ProcessorItem::Regex(masker)])
     /// }
     ///
     /// let output = Output::new(create_processor(), Target::Stdout, Target::Stderr);
@@ -116,12 +116,12 @@ impl Output {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use processor::{maskers::MaskerRegex, MaskerCollection, MaskerItem};
+    use processor::{maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
 
     /// Creates a processor collection with a regex masker.
-    fn create_processor() -> MaskerCollection {
+    fn create_processor() -> ProcessorCollection {
         let masker = MaskerRegex::new(vec![r"password=\w+"], "****").unwrap();
-        MaskerCollection::new(vec![MaskerItem::Regex(masker)])
+        ProcessorCollection::new(vec![ProcessorItem::Regex(masker)])
     }
 
     #[test]

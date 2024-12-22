@@ -3,14 +3,14 @@ use crate::Processor;
 
 /// Represents different types of masking processors.
 #[derive(Clone)]
-pub enum MaskerItem {
+pub enum ProcessorItem {
     /// Regular expression-based processor.
     Regex(MaskerRegex),
     /// Exact string match processor.
     Equal(MaskerEqual),
 }
 
-impl Processor for MaskerItem {
+impl Processor for ProcessorItem {
     /// Processes the input string by delegating to the specific processor variant.
     ///
     /// # Arguments
@@ -20,10 +20,10 @@ impl Processor for MaskerItem {
     /// # Example
     ///
     /// ```rust
-    /// use processor::{MaskerItem, MaskerEqual, Processor};
+    /// use processor::{ProcessorItem, MaskerEqual, Processor};
     ///
     /// let equal_processor = MaskerEqual::new(vec!["secret"], "***");
-    /// let item = MaskerItem::Equal(equal_processor);
+    /// let item = ProcessorItem::Equal(equal_processor);
     ///
     /// let input = "This is a secret message.";
     /// let output = item.process(input);
@@ -31,8 +31,8 @@ impl Processor for MaskerItem {
     /// ```
     fn process(&self, input: &str) -> String {
         match self {
-            MaskerItem::Regex(processor) => processor.process(input),
-            MaskerItem::Equal(processor) => processor.process(input),
+            ProcessorItem::Regex(processor) => processor.process(input),
+            ProcessorItem::Equal(processor) => processor.process(input),
         }
     }
 }

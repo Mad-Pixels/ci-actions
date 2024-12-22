@@ -1,4 +1,4 @@
-use processor::{maskers::MaskerEqual, maskers::MaskerRegex, MaskerCollection, MaskerItem};
+use processor::{maskers::MaskerEqual, maskers::MaskerRegex, ProcessorCollection, ProcessorItem};
 use provider::{AWSProvider, Provider};
 use slog::{o, Drain, Logger};
 use std::collections::HashMap;
@@ -30,12 +30,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let equal_processor = MaskerEqual::new(vec!["password", "key"], "***");
 
     let processors = vec![
-        MaskerItem::Regex(regexp_processor),
-        MaskerItem::Equal(equal_processor),
+        ProcessorItem::Regex(regexp_processor),
+        ProcessorItem::Equal(equal_processor),
     ];
 
     //provider.get_predefined_masked_objects()
-    let processor = MaskerCollection::new(processors);
+    let processor = ProcessorCollection::new(processors);
 
     // Путь к terraform может быть получен из переменных окружения или конфигурации
     let terraform_path = PathBuf::from("/usr/local/bin/terraform");

@@ -8,7 +8,7 @@
 //! - [`maskers`]: Contains implementations of different masking strategies.
 //! - [`collection`]: Manages collections of processors applied sequentially.
 //! - [`error`]: Defines error types and result aliases used across the crate.
-//! - [`item`]: Defines the `MaskerItem` enum representing different processor types.
+//! - [`item`]: Defines the `ProcessorItem` enum representing different processor types.
 //! - [`traits`]: Contains the `Processor` trait that all processors must implement.
 //!
 //! ## Usage
@@ -16,21 +16,21 @@
 //! Below is a basic example of how to create a collection of processors and process an input string.
 //!
 //! ```rust
-//! use processor::{MaskerCollection, MaskerItem, Processor, ProcessorError};
+//! use processor::{ProcessorCollection, ProcessorItem, Processor, ProcessorError};
 //! use processor::maskers::{MaskerEqual, MaskerRegex};
 //!
 //! // Create individual processors
 //! let regex_processor = MaskerRegex::new(vec![r"\d{4}", r"secret"], "****").unwrap();
 //! let equal_processor = MaskerEqual::new(vec!["password", "key"], "***");
 //!
-//! // Combine processors into MaskerItems
+//! // Combine processors into ProcessorItems
 //! let processors = vec![
-//!     MaskerItem::Regex(regex_processor),
-//!     MaskerItem::Equal(equal_processor),
+//!     ProcessorItem::Regex(regex_processor),
+//!     ProcessorItem::Equal(equal_processor),
 //! ];
 //!
 //! // Create a collection of processors
-//! let collection = MaskerCollection::new(processors);
+//! let collection = ProcessorCollection::new(processors);
 //!
 //! // Process an input string
 //! let input = "My password is 1234 and my key is secret";
@@ -45,9 +45,9 @@ mod error;
 mod item;
 mod traits;
 
-pub use collection::MaskerCollection;
+pub use collection::ProcessorCollection;
 pub use error::ProcessorError;
-pub use item::MaskerItem;
+pub use item::ProcessorItem;
 pub use maskers::{MaskerEqual, MaskerRegex};
 pub use traits::Processor;
 
@@ -61,10 +61,10 @@ mod tests {
         let equal_processor = MaskerEqual::new(vec!["password", "key"], "***");
 
         let processors = vec![
-            MaskerItem::Regex(regexp_processor),
-            MaskerItem::Equal(equal_processor),
+            ProcessorItem::Regex(regexp_processor),
+            ProcessorItem::Equal(equal_processor),
         ];
-        let collection = MaskerCollection::new(processors);
+        let collection = ProcessorCollection::new(processors);
         let input = "My password is 1234 and my key is secret";
         let output = collection.process(input);
 
@@ -77,10 +77,10 @@ mod tests {
         let second_processor = MaskerEqual::new(vec!["second"], "2nd");
 
         let processors = vec![
-            MaskerItem::Equal(first_processor),
-            MaskerItem::Equal(second_processor),
+            ProcessorItem::Equal(first_processor),
+            ProcessorItem::Equal(second_processor),
         ];
-        let collection = MaskerCollection::new(processors);
+        let collection = ProcessorCollection::new(processors);
         let input = "This is the first and the second example.";
         let output = collection.process(input);
 

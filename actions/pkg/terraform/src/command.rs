@@ -102,11 +102,9 @@ impl TerraformCommand {
             } => {
                 let mut args = vec!["init".to_string()];
                 if let Some(config) = backend_config {
-                    // Собираем ключи в вектор и сортируем их для стабильного порядка
                     let mut keys: Vec<_> = config.keys().collect();
                     keys.sort();
  
-                    // Добавляем backend-config в отсортированном порядке
                     for key in keys {
                         if let Some(value) = config.get(key) {
                             args.push(format!("-backend-config={}={}", key, value));

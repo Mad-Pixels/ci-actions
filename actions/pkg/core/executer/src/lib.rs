@@ -19,15 +19,15 @@
 //!
 //! ```rust,no_run
 //! use executer::{Context, Output, Target, Subprocess, Validator};
-//! use processor::{MaskerCollection, MaskerItem};
+//! use processor::{ProcessorCollection, ProcessorItem};
 //! use processor::MaskerRegex;
 //! use std::collections::HashMap;
 //!
 //! #[tokio::main]
 //! async fn main() {
 //!     // Create a processor with maskers for sensitive data
-//!     let processor = MaskerCollection::new(vec![
-//!         MaskerItem::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
+//!     let processor = ProcessorCollection::new(vec![
+//!         ProcessorItem::Regex(MaskerRegex::new(vec![r"password=\w+"], "****").unwrap())
 //!     ]);
 //!
 //!     // Initialize the output handler
