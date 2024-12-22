@@ -50,14 +50,62 @@ mod providers;
 mod traits;
 mod error;
 
+use std::{collections::HashMap, env};
+use crate::providers::aws::constants::REQUIRED_ENV_VARS;
+
+pub use error::{ProviderError, ProviderResult};
 pub use providers::aws::AWSProvider;
-pub use error::ProviderError;
 pub use traits::Provider;
+
+/// Attempts to automatically detect and create a provider based on environment variables.
+///
+/// # Returns
+///
+/// - `Ok(Box<dyn Provider>)` if a supported provider is detected
+/// - `Err(ProviderError::ProviderNotFound)` if no supported provider is detected
+///
+/// # Example
+///
+/// ```rust
+/// use std::env;
+/// use provider::auto_detect;
+///
+/// env::set_var("AWS_ACCESS_KEY_ID", "key");
+/// env::set_var("AWS_SECRET_ACCESS_KEY", "secret");
+///
+/// let provider = auto_detect().expect("Failed to detect provider");
+/// assert!(provider.validate().is_ok());
+/// ```
+pub fn auto_detect() -> ProviderResult<Box<dyn Provider>> {
+    let env_vars: HashMap<String, String> = env::vars().collect();
+
+    let has_aws = REQUIRED_ENV_VARS.iter()
+        .all(|var| env_vars.contains_key(*var));
+
+    if has_aws {
+        return Ok(Box::new(AWSProvider::new(env_vars)));
+    }
+
+    // Add checks for other providers here when they are added
+    // Example:
+    // if has_gcp {
+    //     return Ok(Box::new(GCPProvider::new(env_vars)));
+    // }
+
+    Err(ProviderError::ProviderNotFound)
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
     use std::collections::HashMap;
+
+    fn cleanup_env() {
+        env::remove_var("AWS_ACCESS_KEY_ID");
+        env::remove_var("AWS_SECRET_ACCESS_KEY");
+        // Add other provider vars when implemented
+    }
 
     fn setup_aws_credentials() -> HashMap<String, String> {
         let mut env = HashMap::new();
@@ -134,5 +182,43 @@ mod tests {
             provider1.get_environment().get("AWS_ACCESS_KEY_ID"),
             provider2.get_environment().get("AWS_ACCESS_KEY_ID")
         );
+    }
+
+    #[test]
+    fn test_auto_detect_aws() {
+        cleanup_env();
+        
+        env::set_var("AWS_ACCESS_KEY_ID", "test-key");
+        env::set_var("AWS_SECRET_ACCESS_KEY", "test-secret");
+
+        let provider = auto_detect().expect("Should detect AWS provider");
+        assert!(provider.validate().is_ok());
+        
+        cleanup_env();
+    }
+
+    #[test]
+    fn test_auto_detect_none() {
+        cleanup_env();
+        
+        match auto_detect() {
+            Err(ProviderError::ProviderNotFound) => (),
+            _ => panic!("Should return ProviderNotFound when no provider detected"),
+        }
+    }
+
+    #[test]
+    fn test_auto_detect_partial_aws() {
+        cleanup_env();
+        
+        env::set_var("AWS_ACCESS_KEY_ID", "test-key");
+        // Missing AWS_SECRET_ACCESS_KEY
+
+        match auto_detect() {
+            Err(ProviderError::ProviderNotFound) => (),
+            _ => panic!("Should return ProviderNotFound when AWS credentials are incomplete"),
+        }
+        
+        cleanup_env();
     }
 }

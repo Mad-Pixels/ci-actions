@@ -1,7 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
+    "bin/terraform",
+
     "hello",
+    "pkg/config",
     "pkg/terraform",
     "pkg/core/processor",
     "pkg/core/executer",

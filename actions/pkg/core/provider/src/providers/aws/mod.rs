@@ -1,4 +1,4 @@
-mod constants;
+pub(crate) mod constants;
 mod patterns;
 mod provider;
 

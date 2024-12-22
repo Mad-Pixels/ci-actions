@@ -10,6 +10,10 @@ pub enum ProviderError {
     /// Error indicating that the environment configuration is invalid.
     #[error("Invalid environment configuration: {0}")]
     InvalidConfiguration(String),
+
+    /// Error indicating that provider not found but required.
+    #[error("No supported provider detected in environment")]
+    ProviderNotFound,
 }
 
 /// A type alias for results returned by provider operations.

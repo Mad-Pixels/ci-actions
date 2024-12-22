@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 
 use crate::error::{ProviderError, ProviderResult};
 use crate::Provider;
@@ -151,6 +152,34 @@ impl Provider for AWSProvider {
     fn validate(&self) -> ProviderResult<()> {
         self.validate()
     }
+
+    /// Cleans up provider-specific environment variables.
+    /// 
+    /// This method removes all environment variables used by the AWS provider.
+    /// It's useful for cleaning up the environment after tests or when 
+    /// switching between different cloud providers.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use provider::{AWSProvider, Provider};
+    /// use std::collections::HashMap;
+    /// use std::env;
+    /// 
+    /// // Set environment variables
+    /// env::set_var("AWS_ACCESS_KEY_ID", "test-key");
+    /// 
+    /// let aws_provider = AWSProvider::new(HashMap::new());
+    /// 
+    /// // Clean up
+    /// aws_provider.clean();
+    /// assert!(env::var("AWS_ACCESS_KEY_ID").is_err());
+    /// ```
+    fn clean(&self) {
+        for var in REQUIRED_ENV_VARS {
+            env::remove_var(var);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -203,5 +232,11 @@ mod tests {
         let masked_objects = aws.get_predefined_masked_objects();
         assert!(!masked_objects.is_empty());
         assert!(masked_objects[0].contains("arn:aws:iam"));
+    }
+
+    #[test]
+    fn test_clean_missing_vars() {
+        let aws = AWSProvider::new(HashMap::new());
+        aws.clean();
     }
 }
