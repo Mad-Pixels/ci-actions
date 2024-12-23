@@ -1,18 +1,17 @@
 use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
 use terraform::{executor::TerraformExecutor, TerraformConfig};
 use std::collections::HashMap;
-use config::GlobalConfig;
+use config::MainConfig;
 
 use provider::auto_detect;
 use util::init_logger;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = GlobalConfig::new();
-    let terraform_config = TerraformConfig::new();
+    let main_config = MainConfig::new();
+    let tf_config = TerraformConfig::new();
     
-    
-    let level = config.get_log_level().unwrap_or("info".to_string());
+    let level = main_config.get_log_level().unwrap_or("info".to_string());
     let logger = init_logger(&level);
 
     let provider = match auto_detect() {
@@ -24,56 +23,75 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     slog::info!(logger, "Initialize action with provider {}", provider.name());
 
-    // let cmd = match config.get_cmd() {
-    //     Ok(v) => v,
-    //     Err(e) => {
-    //         slog::error!(&logger, "Terraform command not set"; "error" => e.to_string()); 
-    //         return Err(e.into()); 
-    //     }
-    // };
-    
-    
-
-
-
-
-    let output = terraform_config.get_output_file().unwrap();
-    let bin = terraform_config.get_bin().unwrap();
-    let cwd = config.get_working_dir().unwrap();
-    let mask = config.get_mask().unwrap();
-    let cmd = terraform_config.get_cmd().unwrap();
-    slog::debug!(
-        logger,
-        "config bin: {:?}, cwd: {:?}, cmd: {}, mask: {}, output: {:?}", bin, cwd, cmd, mask, output,
-    );
-    
-
-    let mask_provider = match MaskerRegex::new(provider.get_predefined_masked_objects(), &mask) {
-        Ok(masker) => masker,
+    let cwd = match main_config.get_working_dir() {
+        Ok(v) => v,
         Err(e) => {
-            slog::error!(logger, "Failed initialize regex maskers"; "error" => e.to_string());
-            std::process::exit(1);
+            slog::error!(logger, "Work directory not set"; "error" => e.to_string());
+            return Err(e.into());
         }
     };
-    let mask_creds = MaskerEqual::new(provider.values(), &mask);
+    slog::info!(logger, "workdir: {:?}", cwd);
+
+    let cmd = match tf_config.get_cmd() {
+        Ok(v) => v,
+        Err(e) => {
+            slog::error!(logger, "Invalid terraform command"; "error" => e.to_string());
+            return Err(e.into());
+        }
+    };
+    slog::info!(logger, "Action command: {}", cmd);
+
+    let mask = match main_config.get_mask() {
+        Ok(v) => v,
+        Err(e) => {
+            slog::error!(logger, "Mask string not set"; "error" => e.to_string());
+            return Err(e.into());
+        }
+    };
+    slog::debug!(logger, "mask string: {}", mask);
+
+    let bin = match tf_config.get_bin() {
+        Ok(v) => v,
+        Err(e) => {
+            slog::error!(logger, "Invalid terraform bin filepath"; "error" => e.to_string());
+            return Err(e.into());
+        }
+    };
+    slog::debug!(logger, "terraform binary file: {:?}", bin);
+
+    let output = match tf_config.get_output_file() {
+        Ok(v) => v,
+        Err(e) => {
+            slog::error!(logger, "Invalid terraform output filepath"; "error" => e.to_string());
+            return Err(e.into());
+        }
+    };
+    slog::debug!(logger, "Terraform result output filepath: {:?}", output);
+
+    // TODO: TF_VARS!!!!
+    let mut vars = HashMap::new();
+    let masker_provider_output = match MaskerRegex::new(provider.get_predefined_masked_objects(), &mask) {
+        Ok(v) => v,
+        Err(e) => {
+            slog::error!(logger, "Failes to initialize maskers for provider"; "error" => e.to_string());
+            return Err(e.into());
+        }
+    };
+    let masker_provider_credentials = MaskerEqual::new(provider.values(), &mask);
+
 
     let processors = ProcessorCollection::new(vec![
-        // ProcessorItem::Regex(mask_provider),
-        // ProcessorItem::Equal(mask_creds),
+        ProcessorItem::Regex(masker_provider_output),
+        ProcessorItem::Equal(masker_provider_credentials),
     ]);
+    slog::info!(logger, "Action was initialized");
 
-    slog::info!(logger, "action was initialized");
-    let executor = TerraformExecutor::new(processors, bin);
 
-    let mut vars = HashMap::new();
-    
-    print!("{:?}", cwd);
-    let result = executor.plan(cwd, vars, Some(output)).await?;
+    let result = TerraformExecutor::new(processors, bin).plan(cwd, vars, Some(output)).await?;
     if result == 0 {
-        slog::info!(logger, "Plan was finished");
+        slog::info!(logger, "Action {} was finished", cmd);
     } else {
-        slog::error!(logger, "Plan was failed, status: {}", result);
+        slog::error!(logger, "Action {} was failed, status: {}", cmd, result);
     }
-
     Ok(())
 }

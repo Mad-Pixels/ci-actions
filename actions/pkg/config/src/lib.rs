@@ -9,9 +9,9 @@ pub use value::ConfigValue;
 pub use constants::*;
 
 use std::path::PathBuf;
-pub struct GlobalConfig {}
+pub struct MainConfig {}
 
-impl GlobalConfig {
+impl MainConfig {
     pub fn new() -> Self {
         Self {}
     }
