@@ -1,5 +1,5 @@
 use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
-use terraform::{executor::TerraformExecutor, TerraformConfig, TerraformEnv};
+use terraform::{executor::TerraformExecutor, TerraformConfig, TerraformEnv, CommandChain};
 use config::MainConfig;
 
 use provider::auto_detect;
@@ -14,58 +14,87 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let logger = init_logger(&level);
 
     let provider = match auto_detect() {
-        Ok(provider) => provider,
+        Ok(v) => {
+            slog::info!(logger, "Initialize action with provider {}", v.name());
+            v
+        },
         Err(e) => {
             slog::error!(logger, "Failed to detect provider"; "error" => e.to_string());
             return Err(e.into());
         }
     };
-    slog::info!(logger, "Initialize action with provider {}", provider.name());
+    
 
     let cwd = match main_config.get_working_dir() {
-        Ok(v) => v,
+        Ok(v) => {
+            slog::info!(logger, "Workdir: {:?}", v);
+            v
+        },
         Err(e) => {
             slog::error!(logger, "Work directory not set"; "error" => e.to_string());
             return Err(e.into());
         }
     };
-    slog::info!(logger, "Workdir: {:?}", cwd);
-
+    
     let cmd = match tf_config.get_cmd() {
-        Ok(v) => v,
+        Ok(v) => {
+            slog::info!(logger, "Action command: {}", v);
+            v
+        },
         Err(e) => {
             slog::error!(logger, "Invalid terraform command"; "error" => e.to_string());
             return Err(e.into());
         }
     };
-    slog::info!(logger, "Action command: {}", cmd);
+    
+    let workspace: Option<String> = match tf_config.get_workspace() {
+        Ok(v) => {
+            if v.is_empty() {
+                None
+            } else {
+                slog::info!(logger, "Terraform workspace: {}", v);
+                Some(v)
+            }
+        },
+        Err(e) => {
+            slog::error!(logger, "Failed to get terraform workspace"; "error" => e.to_string());
+            return Err(e.into());
+        }
+     };
+
 
     let mask = match main_config.get_mask() {
-        Ok(v) => v,
+        Ok(v) => {
+            slog::debug!(logger, "mask string: {}", v);
+            v
+        },
         Err(e) => {
             slog::error!(logger, "Mask string not set"; "error" => e.to_string());
             return Err(e.into());
         }
     };
-    slog::debug!(logger, "mask string: {}", mask);
 
     let bin = match tf_config.get_bin() {
-        Ok(v) => v,
+        Ok(v) => {
+            slog::debug!(logger, "terraform binary file: {:?}", v);
+            v
+        },
         Err(e) => {
             slog::error!(logger, "Invalid terraform bin filepath"; "error" => e.to_string());
             return Err(e.into());
         }
     };
-    slog::debug!(logger, "terraform binary file: {:?}", bin);
 
     let output = match tf_config.get_output_file() {
-        Ok(v) => v,
+        Ok(v) => {
+            slog::debug!(logger, "terraform result output filepath: {:?}", v);
+            v
+        },
         Err(e) => {
             slog::error!(logger, "Invalid terraform output filepath"; "error" => e.to_string());
             return Err(e.into());
         }
     };
-    slog::debug!(logger, "terraform result output filepath: {:?}", output);
 
     let envs = TerraformEnv::new();
     let masker_provider_output = match MaskerRegex::new(provider.get_predefined_masked_objects(), &mask) {
@@ -85,11 +114,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ]);
     slog::info!(logger, "Action was initialized");
 
-    let result = TerraformExecutor::new(processors, bin).plan(cwd, envs.as_map().clone(), Some(output)).await?;
+    let executor = TerraformExecutor::new(processors, bin);
+
+    // Создаем цепочку команд
+    let chain = CommandChain::new(cwd)
+        .with_vars(envs.as_map().clone())
+        .with_workspace(workspace)  // опционально
+        .with_out(Some(output));
+
+    // Получаем все команды, которые будут выполнены
+    let commands = chain.plan_chain();
+
+    slog::info!(logger, "Starting terraform plan chain"; "steps" => commands.len());
+
+    let result = executor.execute_chain(commands).await?;
+
     if result == 0 {
-        slog::info!(logger, "Action {} was finished", cmd);
+        slog::info!(logger, "Action {} was finished successfully", cmd);
     } else {
-        slog::error!(logger, "Action {} was failed, status: {}", cmd, result);
+        slog::error!(logger, "Action {} failed with status: {}", cmd, result);
     }
     Ok(())
 }

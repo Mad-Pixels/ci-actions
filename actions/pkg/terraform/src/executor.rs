@@ -1,9 +1,11 @@
 use crate::command::{TerraformCommand, WorkspaceOperation};
+use crate::chain::CommandChain;
 use crate::error::{TerraformError, TerraformResult};
 
 use executer::{Context, Output, Subprocess, Target, Validator};
 use processor::ProcessorCollection;
 use std::path::PathBuf;
+use std::collections::HashMap;
 
 /// Executor responsible for running Terraform commands.
 pub struct TerraformExecutor {
@@ -305,5 +307,57 @@ impl TerraformExecutor {
     ) -> TerraformResult<i32> {
         self.execute(TerraformCommand::Workspace { dir, operation })
             .await
+    }
+
+    pub async fn execute_chain(&self, commands: Vec<TerraformCommand>) -> TerraformResult<i32> {
+        let mut last_result = 0;
+        for cmd in &commands {
+            let result = self.execute(cmd.clone()).await;
+            match result {
+                Ok(code) => {
+                    if let TerraformCommand::Workspace { operation: WorkspaceOperation::New(_), .. } = cmd {
+                        if code != 0 {
+                            continue;
+                        }
+                    }
+                    last_result = code;
+                    if code != 0 {
+                        return Ok(code);
+                    }
+                }
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(last_result)
+    }
+
+    pub async fn execute_plan_chain(
+        &self,
+        dir: PathBuf,
+        vars: HashMap<String, String>,
+        workspace: Option<String>,
+        out: Option<PathBuf>,
+    ) -> TerraformResult<i32> {
+        let chain = CommandChain::new(dir)
+            .with_vars(vars)
+            .with_out(out)
+            .with_workspace(workspace);
+
+        self.execute_chain(chain.plan_chain()).await
+    }
+
+    pub async fn execute_apply_chain(
+        &self,
+        dir: PathBuf,
+        plan_file: Option<PathBuf>,
+        workspace: Option<String>,
+        auto_approve: bool,
+    ) -> TerraformResult<i32> {
+        let chain = CommandChain::new(dir)
+            .with_out(plan_file)
+            .with_workspace(workspace)
+            .with_auto_approve(auto_approve);
+
+        self.execute_chain(chain.apply_chain()).await
     }
 }

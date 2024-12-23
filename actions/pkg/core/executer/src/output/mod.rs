@@ -85,7 +85,7 @@ impl Output {
     /// ```
     pub fn write(&self, line: &str) {
         let processed = self.processor.process(line);
-        slog::info!(self.logger, "{}", processed);
+        //slog::info!(self.logger, "{}", processed);
         self.writer.write(&processed, &self.output_target);
     }
 
