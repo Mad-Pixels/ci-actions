@@ -3,7 +3,6 @@ resolver = "2"
 members = [
     "bin/terraform",
 
-    "hello",
     "pkg/util",
     "pkg/config",
     "pkg/terraform",

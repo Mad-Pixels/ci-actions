@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     };
-    slog::info!(logger, "workdir: {:?}", cwd);
+    slog::info!(logger, "Workdir: {:?}", cwd);
 
     let cmd = match tf_config.get_cmd() {
         Ok(v) => v,
@@ -66,14 +66,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     };
-    slog::debug!(logger, "Terraform result output filepath: {:?}", output);
+    slog::debug!(logger, "terraform result output filepath: {:?}", output);
 
     // TODO: TF_VARS!!!!
-    let mut vars = HashMap::new();
+    let vars = HashMap::new();
     let masker_provider_output = match MaskerRegex::new(provider.get_predefined_masked_objects(), &mask) {
         Ok(v) => v,
         Err(e) => {
-            slog::error!(logger, "Failes to initialize maskers for provider"; "error" => e.to_string());
+            slog::error!(logger, "Failed to initialize maskers for provider"; "error" => e.to_string());
             return Err(e.into());
         }
     };
