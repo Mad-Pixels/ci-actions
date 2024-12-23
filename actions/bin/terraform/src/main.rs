@@ -1,41 +1,47 @@
-use config::Config;
 use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
+use terraform::{executor::TerraformExecutor, TerraformConfig};
 use std::collections::HashMap;
-use terraform::executor::TerraformExecutor;
+use config::GlobalConfig;
 
 use provider::auto_detect;
 use util::init_logger;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::new();
+    let config = GlobalConfig::new();
+    let terraform_config = TerraformConfig::new();
+    
     
     let level = config.get_log_level().unwrap_or("info".to_string());
-    let logger = init_logger("info");
+    let logger = init_logger(&level);
 
-    
     let provider = match auto_detect() {
         Ok(provider) => provider,
         Err(e) => {
-    // или более структурированный вариант:
-    slog::error!(logger, "Failed to detect provider: {}", e);
-    let error_str = e.to_string();
-    slog::error!(logger, "Failed to detect provider"; 
-        "error" => e.to_string()
-    );
-    
-
-    std::process::exit(1);
-            
+            slog::error!(logger, "Failed to detect provider"; "error" => e.to_string());
+            return Err(e.into());
         }
     };
-    slog::debug!(logger, "Initialize action with {}", provider.name());
+    slog::info!(logger, "Initialize action with provider {}", provider.name());
 
-    let output = config.get_terraform_output().unwrap();
-    let bin = config.get_terraform_bin().unwrap();
+    // let cmd = match config.get_cmd() {
+    //     Ok(v) => v,
+    //     Err(e) => {
+    //         slog::error!(&logger, "Terraform command not set"; "error" => e.to_string()); 
+    //         return Err(e.into()); 
+    //     }
+    // };
+    
+    
+
+
+
+
+    let output = terraform_config.get_output_file().unwrap();
+    let bin = terraform_config.get_bin().unwrap();
     let cwd = config.get_working_dir().unwrap();
     let mask = config.get_mask().unwrap();
-    let cmd = config.get_cmd().unwrap();
+    let cmd = terraform_config.get_cmd().unwrap();
     slog::debug!(
         logger,
         "config bin: {:?}, cwd: {:?}, cmd: {}, mask: {}, output: {:?}", bin, cwd, cmd, mask, output,
@@ -52,8 +58,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mask_creds = MaskerEqual::new(provider.values(), &mask);
 
     let processors = ProcessorCollection::new(vec![
-        ProcessorItem::Regex(mask_provider),
-        ProcessorItem::Equal(mask_creds),
+        // ProcessorItem::Regex(mask_provider),
+        // ProcessorItem::Equal(mask_creds),
     ]);
 
     slog::info!(logger, "action was initialized");
