@@ -3,6 +3,8 @@ pub mod command;
 pub mod error;
 
 pub mod executor;
+pub mod environments;
+pub use environments::TerraformEnv;
 pub use constants::*;
 
 use config::ConfigResult;

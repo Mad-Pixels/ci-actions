@@ -1,6 +1,5 @@
 use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
-use terraform::{executor::TerraformExecutor, TerraformConfig};
-use std::collections::HashMap;
+use terraform::{executor::TerraformExecutor, TerraformConfig, TerraformEnv};
 use config::MainConfig;
 
 use provider::auto_detect;
@@ -68,8 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     slog::debug!(logger, "terraform result output filepath: {:?}", output);
 
-    // TODO: TF_VARS!!!!
-    let vars = HashMap::new();
+    let envs = TerraformEnv::new();
     let masker_provider_output = match MaskerRegex::new(provider.get_predefined_masked_objects(), &mask) {
         Ok(v) => v,
         Err(e) => {
@@ -78,16 +76,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
     let masker_provider_credentials = MaskerEqual::new(provider.values(), &mask);
-
+    let masker_terraform_envs = MaskerEqual::new(envs.values(), &mask);
 
     let processors = ProcessorCollection::new(vec![
         ProcessorItem::Regex(masker_provider_output),
         ProcessorItem::Equal(masker_provider_credentials),
+        ProcessorItem::Equal(masker_terraform_envs),
     ]);
     slog::info!(logger, "Action was initialized");
 
-
-    let result = TerraformExecutor::new(processors, bin).plan(cwd, vars, Some(output)).await?;
+    let result = TerraformExecutor::new(processors, bin).plan(cwd, envs.as_map().clone(), Some(output)).await?;
     if result == 0 {
         slog::info!(logger, "Action {} was finished", cmd);
     } else {

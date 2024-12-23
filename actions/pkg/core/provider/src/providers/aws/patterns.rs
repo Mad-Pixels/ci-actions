@@ -86,5 +86,8 @@ lazy_static! {
         r"arn:aws:sns:[a-z0-9-]+:\d{12}:[a-zA-Z0-9-_]+".to_string(),
         r"arn:aws:sqs:[a-z0-9-]+:\d{12}:[a-zA-Z0-9-_]+".to_string(),
         r"arn:aws:events:[a-z0-9-]+:\d{12}:rule/[a-zA-Z0-9-_]+".to_string(),
+
+        // Common
+        r"\*".to_string(),
     ];
 }
