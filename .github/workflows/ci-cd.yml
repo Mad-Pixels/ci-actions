@@ -1,5 +1,4 @@
 name: CI/CD
-
 on:
   push:
     branches: [ '**' ]
@@ -7,20 +6,21 @@ on:
     branches: [ '**' ]
 
 jobs:
-  main:
+  discover:
     runs-on: ubuntu-latest
+    outputs:
+      binaries: ${{ steps.discover-binaries.outputs.binaries }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
       - name: Discover binaries
         id: discover-binaries
         run: |
           BINARIES=$(ls actions/bin | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "binaries=$BINARIES" >> $GITHUB_ENV
+          echo "binaries=$BINARIES" >> "$GITHUB_OUTPUT"
 
-      - name: Run Rust CI workflow
-        uses: Mad-Pixels/github-workflows/.github/workflows/rust-ci.yml@dev
-        with:
-          working-directory: "./actions"
-          binaries: ${{ env.binaries }}
+  rust-ci:
+    needs: discover
+    uses: Mad-Pixels/github-workflows/.github/workflows/rust-ci.yml@dev
+    with:
+      working-directory: "./actions"
+      binaries: ${{ needs.discover.outputs.binaries }}
