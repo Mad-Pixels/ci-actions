@@ -42,7 +42,6 @@ where
     }
 }
 
-/// Validator that checks if a `PathBuf` points to an existing file.
 #[derive(Clone)]
 pub struct FileExists;
 
@@ -62,7 +61,6 @@ impl Validator<PathBuf> for FileExists {
     }
 }
 
-/// Validator that checks if a `PathBuf` points to an existing directory.
 #[derive(Clone)]
 pub struct DirExists;
 
@@ -141,7 +139,6 @@ mod tests {
 
     #[test]
     fn test_custom_validator_failure() {
-        // Define a custom validator that ensures a string is not empty
         let non_empty = |s: &String| -> ConfigResult<()> {
             if s.is_empty() {
                 Err(ConfigError::InvalidValue("String is empty".to_string()))

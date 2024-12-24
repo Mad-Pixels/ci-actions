@@ -1,5 +1,5 @@
-use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
 use terraform::{executor::TerraformExecutor, TerraformConfig, TerraformEnv, CommandChain};
+use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
 use config::MainConfig;
 
 use provider::auto_detect;
@@ -23,7 +23,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     };
-    
 
     let cwd = match main_config.get_working_dir() {
         Ok(v) => {
@@ -115,20 +114,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     slog::info!(logger, "Action was initialized");
 
     let executor = TerraformExecutor::new(processors, bin);
-
-    // Создаем цепочку команд
     let chain = CommandChain::new(cwd)
         .with_vars(envs.as_map().clone())
-        .with_workspace(workspace)  // опционально
+        .with_workspace(workspace)
         .with_out(Some(output));
-
-    // Получаем все команды, которые будут выполнены
     let commands = chain.plan_chain();
-
     slog::info!(logger, "Starting terraform plan chain"; "steps" => commands.len());
 
     let result = executor.execute_chain(commands).await?;
-
     if result == 0 {
         slog::info!(logger, "Action {} was finished successfully", cmd);
     } else {
