@@ -16,11 +16,11 @@ jobs:
 
       # Собираем под x86_64-musl
       - name: Build x86_64
-        run: cd ./actions/bin/terraform && cross build --release --target x86_64-unknown-linux-musl
+        run: cd ./actions && cross build --release --target aarch64-unknown-linux-musl -p action-terraform
 
       # Собираем под aarch64-musl
       - name: Build aarch64
-        run: cross build --release --target aarch64-unknown-linux-musl
+        run: cd ./actions && cross build --release --target aarch64-unknown-linux-musl -p action-terraform
 
       # Загрузим артефакты
       - name: Upload x86_64 artifact
