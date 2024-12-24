@@ -1,0 +1,41 @@
+name: BuildAndRelease
+
+on:
+  push:
+    branches: [ "dev1" ]
+
+jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ x86_64-unknown-linux-musl, aarch64-unknown-linux-musl ]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Установить Rust (stable)
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Поставить пакеты для сборки
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y musl-tools upx
+
+    - name: Добавить нужный target
+      run: |
+        rustup target add ${{ matrix.target }}
+
+    - name: Собрать
+      run: |
+        cd actions
+        cargo build --release --target ${{ matrix.target }} -p action-terraform
+        strip target/${{ matrix.target }}/release/action-terraform
+        upx --best --lzma target/${{ matrix.target }}/release/action-terraform
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.target }}-action-terraform
+        path: target/${{ matrix.target }}/release/action-terraform
