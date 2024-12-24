@@ -12,7 +12,7 @@ impl PathRule {
     ///
     /// ```rust
     /// use executer::rules::PathRule;
-
+    /// 
     /// let rule = PathRule::new();
     /// ```
     pub fn new() -> Self {
