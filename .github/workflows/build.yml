@@ -50,7 +50,7 @@ jobs:
       - name: Install Rust stable
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          echo "::add-path::$HOME/.cargo/bin"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           rustup target add x86_64-apple-darwin
           rustup target add aarch64-apple-darwin
 
