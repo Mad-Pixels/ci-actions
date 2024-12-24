@@ -1,15 +1,15 @@
-pub mod constants;
-pub mod command;
-pub mod error;
 pub mod chain;
+pub mod command;
+pub mod constants;
+pub mod error;
 
-pub mod executor;
 pub mod environments;
-pub use environments::TerraformEnv;
+pub mod executor;
 pub use constants::*;
+pub use environments::TerraformEnv;
 
-use config::ConfigResult;
 pub use chain::CommandChain;
+use config::ConfigResult;
 use std::path::PathBuf;
 
 pub struct TerraformConfig {}

@@ -10,7 +10,7 @@ pub enum ConfigError {
     EnvVarMissing(String),
     InvalidValue(String),
 }
- 
+
 impl fmt::Display for ConfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

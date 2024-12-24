@@ -625,8 +625,7 @@ mod tests {
         #[cfg(windows)]
         let cmd = "pause";
 
-        let context = Context::new(build_command(cmd), HashMap::new(), None)
-            .with_timeout(2);
+        let context = Context::new(build_command(cmd), HashMap::new(), None).with_timeout(2);
         let status = subprocess
             .execute(context)
             .await

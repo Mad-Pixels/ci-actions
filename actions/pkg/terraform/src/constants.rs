@@ -1,4 +1,4 @@
-use config::{Required, ConfigValue, FileExists};
+use config::{ConfigValue, FileExists, Required};
 
 use lazy_static::lazy_static;
 use std::path::PathBuf;
@@ -15,20 +15,15 @@ pub const DEFAULT_TERRAFORM_BIN: &str = "/usr/local/bin/terraform";
 pub const DEFAULT_EMPTY: &str = "";
 
 lazy_static! {
-    pub static ref CMD: ConfigValue<Required> = ConfigValue::<Required>::required(ENV_TERRAFORM_CMD);
-
-    pub static ref TERRAFORM_WORKSPACE: ConfigValue<String> = ConfigValue::new(
-        DEFAULT_EMPTY.to_string(),
-        ENV_TERRAFORM_WORKSPACE
-    );
-
+    pub static ref CMD: ConfigValue<Required> =
+        ConfigValue::<Required>::required(ENV_TERRAFORM_CMD);
+    pub static ref TERRAFORM_WORKSPACE: ConfigValue<String> =
+        ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_TERRAFORM_WORKSPACE);
     pub static ref TERRAFORM_OUTPUT: ConfigValue<PathBuf> = ConfigValue::new(
         PathBuf::from(DEFAULT_TERRAFORM_OUTPUT),
         ENV_TERRAFORM_OUTPUT
     );
-
-    pub static ref TERRAFORM_BIN: ConfigValue<PathBuf> = ConfigValue::new(
-        PathBuf::from(DEFAULT_TERRAFORM_BIN),
-        ENV_TERRAFORM_BIN
-    ).with_validator(FileExists);
+    pub static ref TERRAFORM_BIN: ConfigValue<PathBuf> =
+        ConfigValue::new(PathBuf::from(DEFAULT_TERRAFORM_BIN), ENV_TERRAFORM_BIN)
+            .with_validator(FileExists);
 }

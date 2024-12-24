@@ -1,4 +1,4 @@
-use crate::{ConfigError, ConfigResult, Required, validator::Validator};
+use crate::{validator::Validator, ConfigError, ConfigResult, Required};
 use std::{env, path::PathBuf};
 
 /// Represents a configuration value that can be retrieved from an environment variable.
@@ -151,10 +151,10 @@ impl ConfigValue<PathBuf> {
     ///
     /// let config_value = ConfigValue::new(temp_path.clone(), "WORKING_DIR")
     ///     .with_validator(DirExists);
-    /// 
+    ///
     /// // Set environment variable to the temp directory
     /// env::set_var("WORKING_DIR", temp_path.to_str().unwrap());
-    /// 
+    ///
     /// let path = config_value.get().unwrap();
     /// assert_eq!(path, temp_path);
     /// ```
@@ -292,8 +292,8 @@ mod tests {
     #[test]
     fn test_with_validator_success() {
         let temp_dir = tempdir().unwrap();
-        let config = ConfigValue::new(temp_dir.path().to_path_buf(), "VALID_DIR")
-            .with_validator(DirExists);
+        let config =
+            ConfigValue::new(temp_dir.path().to_path_buf(), "VALID_DIR").with_validator(DirExists);
         env::set_var("VALID_DIR", temp_dir.path());
         let path = config.get().unwrap();
         assert_eq!(path, temp_dir.path());
@@ -310,8 +310,8 @@ mod tests {
 
     #[test]
     fn test_clone_config_value() {
-        let config = ConfigValue::new("value".to_string(), "CLONE_TEST")
-            .with_validator(|v: &String| {
+        let config =
+            ConfigValue::new("value".to_string(), "CLONE_TEST").with_validator(|v: &String| {
                 if v.is_empty() {
                     Err(ConfigError::InvalidValue("Empty string".to_string()))
                 } else {

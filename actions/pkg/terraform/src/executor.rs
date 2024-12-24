@@ -1,11 +1,11 @@
-use crate::command::{TerraformCommand, WorkspaceOperation};
 use crate::chain::CommandChain;
+use crate::command::{TerraformCommand, WorkspaceOperation};
 use crate::error::{TerraformError, TerraformResult};
 
 use executer::{Context, Output, Subprocess, Target, Validator};
 use processor::ProcessorCollection;
-use std::path::PathBuf;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 /// Executor responsible for running Terraform commands.
 pub struct TerraformExecutor {
@@ -315,7 +315,11 @@ impl TerraformExecutor {
             let result = self.execute(cmd.clone()).await;
             match result {
                 Ok(code) => {
-                    if let TerraformCommand::Workspace { operation: WorkspaceOperation::New(_), .. } = cmd {
+                    if let TerraformCommand::Workspace {
+                        operation: WorkspaceOperation::New(_),
+                        ..
+                    } = cmd
+                    {
                         if code != 0 {
                             continue;
                         }

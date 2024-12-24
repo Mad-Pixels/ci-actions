@@ -1,6 +1,6 @@
-use terraform::{executor::TerraformExecutor, TerraformConfig, TerraformEnv, CommandChain};
-use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
 use config::MainConfig;
+use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
+use terraform::{executor::TerraformExecutor, CommandChain, TerraformConfig, TerraformEnv};
 
 use provider::auto_detect;
 use util::init_logger;
@@ -9,7 +9,7 @@ use util::init_logger;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let main_config = MainConfig::new();
     let tf_config = TerraformConfig::new();
-    
+
     let level = main_config.get_log_level().unwrap_or("info".to_string());
     let logger = init_logger(&level);
 
@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(v) => {
             slog::info!(logger, "Initialize action with provider {}", v.name());
             v
-        },
+        }
         Err(e) => {
             slog::error!(logger, "Failed to detect provider"; "error" => e.to_string());
             return Err(e.into());
@@ -28,24 +28,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(v) => {
             slog::info!(logger, "Workdir: {:?}", v);
             v
-        },
+        }
         Err(e) => {
             slog::error!(logger, "Work directory not set"; "error" => e.to_string());
             return Err(e.into());
         }
     };
-    
+
     let cmd = match tf_config.get_cmd() {
         Ok(v) => {
             slog::info!(logger, "Action command: {}", v);
             v
-        },
+        }
         Err(e) => {
             slog::error!(logger, "Invalid terraform command"; "error" => e.to_string());
             return Err(e.into());
         }
     };
-    
+
     let workspace: Option<String> = match tf_config.get_workspace() {
         Ok(v) => {
             if v.is_empty() {
@@ -54,19 +54,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 slog::info!(logger, "Terraform workspace: {}", v);
                 Some(v)
             }
-        },
+        }
         Err(e) => {
             slog::error!(logger, "Failed to get terraform workspace"; "error" => e.to_string());
             return Err(e.into());
         }
-     };
-
+    };
 
     let mask = match main_config.get_mask() {
         Ok(v) => {
             slog::debug!(logger, "mask string: {}", v);
             v
-        },
+        }
         Err(e) => {
             slog::error!(logger, "Mask string not set"; "error" => e.to_string());
             return Err(e.into());
@@ -77,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(v) => {
             slog::debug!(logger, "terraform binary file: {:?}", v);
             v
-        },
+        }
         Err(e) => {
             slog::error!(logger, "Invalid terraform bin filepath"; "error" => e.to_string());
             return Err(e.into());
@@ -88,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(v) => {
             slog::debug!(logger, "terraform result output filepath: {:?}", v);
             v
-        },
+        }
         Err(e) => {
             slog::error!(logger, "Invalid terraform output filepath"; "error" => e.to_string());
             return Err(e.into());
@@ -96,7 +95,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let envs = TerraformEnv::new();
-    let masker_provider_output = match MaskerRegex::new(provider.get_predefined_masked_objects(), &mask) {
+    let masker_provider_output = match MaskerRegex::new(
+        provider.get_predefined_masked_objects(),
+        &mask,
+    ) {
         Ok(v) => v,
         Err(e) => {
             slog::error!(logger, "Failed to initialize maskers for provider"; "error" => e.to_string());

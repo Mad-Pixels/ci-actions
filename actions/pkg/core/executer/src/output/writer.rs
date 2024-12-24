@@ -1,13 +1,13 @@
 use super::formatter;
 use super::types::Target;
-use slog::{o, Drain, Logger};
 use formatter::PlainFormatter;
+use slog::{o, Drain, Logger};
 use std::fs::OpenOptions;
 use std::io::Write;
 
 /// Handles writing log messages to different targets.
 #[derive(Clone)]
-pub(crate) struct Writer{
+pub(crate) struct Writer {
     logger: Logger,
 }
 
@@ -28,8 +28,9 @@ impl Writer {
     /// * `target` - The target where the message should be written.
     pub fn write(&self, line: &str, target: &Target) {
         match target {
-            Target::Stdout => slog::info!(self.logger, "{}", line),//println!("{}", line),
-            Target::Stderr => { //slog::error!(self.logger, "{}", line),//eprintln!("{}", line),
+            Target::Stdout => slog::info!(self.logger, "{}", line), //println!("{}", line),
+            Target::Stderr => {
+                //slog::error!(self.logger, "{}", line),//eprintln!("{}", line),
                 if line.contains("Error:") || line.contains("error:") {
                     slog::error!(self.logger, "{}", line);
                 } else if line.contains("Warning:") || line.contains("warning:") {
@@ -37,7 +38,7 @@ impl Writer {
                 } else {
                     slog::info!(self.logger, "{}", line);
                 }
-            },
+            }
             Target::File(path) => {
                 let mut file = OpenOptions::new()
                     .create(true)

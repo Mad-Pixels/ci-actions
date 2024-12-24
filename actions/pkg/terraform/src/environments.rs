@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::env;
 
 pub struct TerraformEnv {
-    environment: HashMap<String, String>
+    environment: HashMap<String, String>,
 }
 
 impl TerraformEnv {
@@ -24,9 +24,7 @@ impl TerraformEnv {
         self.environment
             .iter()
             .map(|(key, value)| {
-                let clean_key = key.strip_prefix("TF_VAR_")
-                    .unwrap_or(key)
-                    .to_string();
+                let clean_key = key.strip_prefix("TF_VAR_").unwrap_or(key).to_string();
                 (clean_key, value.clone())
             })
             .collect()
@@ -98,7 +96,7 @@ mod tests {
     #[test]
     fn test_add_and_remove() {
         let mut env = TerraformEnv::new();
-        
+
         env.add("region", "us-east-1".to_string());
         assert_eq!(env.get("region").unwrap(), "us-east-1");
 

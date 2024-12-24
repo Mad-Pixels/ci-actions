@@ -15,16 +15,10 @@ pub fn init_logger(level: &str) -> Logger {
             Level::Info
         }
     };
-    let decorator = slog_term::TermDecorator::new()
-        .force_color() 
-        .build();
-    let drain = slog_term::CompactFormat::new(decorator)
-        .build()
-        .fuse();
-    
+    let decorator = slog_term::TermDecorator::new().force_color().build();
+    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
+
     let drain = slog::LevelFilter::new(drain, log_level).fuse();
-    let drain = slog_async::Async::new(drain)
-        .build()
-        .fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
     return Logger::root(drain, o!());
 }
