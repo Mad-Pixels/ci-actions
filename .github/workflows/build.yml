@@ -16,7 +16,7 @@ jobs:
 
       # Собираем под x86_64-musl
       - name: Build x86_64
-        run: cross build --release --target x86_64-unknown-linux-musl
+        run: cd ./actions/bin/terraform && cross build --release --target x86_64-unknown-linux-musl
 
       # Собираем под aarch64-musl
       - name: Build aarch64
