@@ -6,7 +6,7 @@ on:
 
 jobs:
   check:
-    uses: github.com/Mad-Pixels/github-workflows/.github/workflows/rust-check.yml@dev
+    uses: Mad-Pixels/github-workflows/.github/workflows/rust-check.yml@dev
     with:
       working-directory: "./actions"
 
