@@ -1,0 +1,17 @@
+name: Commit 
+
+on:
+  push:
+    branches:
+      - '**' 
+      - '!main'
+    paths:
+      - '**.rs'
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+
+jobs:
+  check:
+    uses: Mad-Pixels/github-workflows/.github/workflows/rust-check.yml@dev
+    with:
+      working-directory: "./actions"

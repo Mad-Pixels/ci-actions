@@ -1,0 +1,13 @@
+name: PR etc
+
+on:
+  pull_request:
+    branches:
+      - '**' 
+      - '!main'
+
+jobs:
+  check:
+    uses: Mad-Pixels/github-workflows/.github/workflows/rust-check.yml@dev
+    with:
+      working-directory: "./actions"
