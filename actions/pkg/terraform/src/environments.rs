@@ -71,6 +71,12 @@ impl TerraformEnv {
     }
 }
 
+impl Default for TerraformEnv {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

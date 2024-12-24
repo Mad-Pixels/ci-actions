@@ -28,3 +28,9 @@ impl MainConfig {
         MASK.get()
     }
 }
+
+impl Default for MainConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}

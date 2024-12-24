@@ -102,6 +102,12 @@ impl ValidationRule for EnvRule {
     }
 }
 
+impl Default for EnvRule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -35,3 +35,9 @@ impl TerraformConfig {
         CMD.get()
     }
 }
+
+impl Default for TerraformConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}

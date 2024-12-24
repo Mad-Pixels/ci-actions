@@ -100,6 +100,12 @@ impl ValidationRule for PathRule {
     }
 }
 
+impl Default for PathRule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

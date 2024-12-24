@@ -44,20 +44,6 @@ impl Validator {
         Self { rules }
     }
 
-    /// Creates a default `Validator` with standard validation rules.
-    /// path, cwd, cmd
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use executer::Validator;
-    ///
-    /// let validator = Validator::default();
-    /// ```
-    pub fn default() -> Self {
-        Self::new(super::rules::standard_rules())
-    }
-
     /// Validates the given context against all validation rules.
     ///
     /// Runs each validation rule in order of priority. If any rule fails,
@@ -99,5 +85,11 @@ impl Validator {
             rule.validate(context)?;
         }
         Ok(())
+    }
+}
+
+impl Default for Validator {
+    fn default() -> Self {
+        Self::new(super::rules::standard_rules())
     }
 }

@@ -122,6 +122,12 @@ impl ValidationRule for CmdRule {
     }
 }
 
+impl Default for CmdRule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

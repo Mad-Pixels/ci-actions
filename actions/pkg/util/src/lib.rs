@@ -1,6 +1,4 @@
 use slog::{o, Drain, Level, Logger};
-use slog_async;
-use slog_term;
 
 pub fn init_logger(level: &str) -> Logger {
     let log_level = match level.to_lowercase().as_str() {
@@ -20,5 +18,5 @@ pub fn init_logger(level: &str) -> Logger {
 
     let drain = slog::LevelFilter::new(drain, log_level).fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
-    return Logger::root(drain, o!());
+    Logger::root(drain, o!())
 }
