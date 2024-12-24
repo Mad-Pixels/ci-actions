@@ -6,7 +6,7 @@ on:
 
 jobs:
   check:
-    uses: Mad-Pixels/github-workflows/.github/workflows/rust-check.yml@dev
+    uses: Mad-Pixels/github-workflows/.github/workflows/rust-build.yml@dev
     with:
       working-directory: "./actions"
       # binaries: '["terraform", "other-binary"]'
