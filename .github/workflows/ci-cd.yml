@@ -6,21 +6,7 @@ on:
     branches: [ '**' ]
 
 jobs:
-  discover:
-    runs-on: ubuntu-latest
-    outputs:
-      binaries: ${{ steps.discover-binaries.outputs.binaries }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Discover binaries
-        id: discover-binaries
-        run: |
-          BINARIES=$(ls actions/bin | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "binaries=$BINARIES" >> "$GITHUB_OUTPUT"
-
   rust-ci:
-    needs: discover
     uses: Mad-Pixels/github-workflows/.github/workflows/rust-ci.yml@dev
     with:
       working-directory: "./actions"
-      binaries: ${{ needs.discover.outputs.binaries }}

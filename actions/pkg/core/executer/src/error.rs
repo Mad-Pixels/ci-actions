@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+
 /// Represents the various errors that can occur during command execution.
 #[derive(Error, Debug)]
 pub enum ExecuterError {
