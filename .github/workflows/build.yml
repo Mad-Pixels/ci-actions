@@ -9,6 +9,7 @@ jobs:
     uses: Mad-Pixels/github-workflows/.github/workflows/rust-check.yml@dev
     with:
       working-directory: "./actions"
+
       # binaries: '["terraform", "other-binary"]'
 
 
