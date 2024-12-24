@@ -2,7 +2,7 @@ name: BuildAndRelease
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "dev1" ]
 
 jobs:
   build-and-upload:
