@@ -5,7 +5,8 @@ on:
     branches: [ "dev1" ]
 
 jobs:
-  build-and-upload:
+  # ----------------- ЛИНУКС (musl) -----------------
+  build-and-upload-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -13,24 +14,68 @@ jobs:
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
 
-      - name: Build x86_64
+      # Сборка x86_64-unknown-linux-musl
+      - name: Build Linux x86_64
         run: |
-          cd ./actions
+          cd actions
           cross build --release --target x86_64-unknown-linux-musl -p action-terraform
 
-      - name: Build aarch64
+      # Сборка aarch64-unknown-linux-musl
+      - name: Build Linux aarch64
         run: |
-          cd ./actions
+          cd actions
           cross build --release --target aarch64-unknown-linux-musl -p action-terraform
 
-      - name: Upload x86_64 artifact
+      # Загружаем x86_64 (musl) бинарь
+      - name: Upload binary-x86_64-linux
         uses: actions/upload-artifact@v3
         with:
-          name: binary-x86_64
+          name: binary-x86_64-linux
           path: actions/target/x86_64-unknown-linux-musl/release/action-terraform
 
-      - name: Upload aarch64 artifact
+      # Загружаем aarch64 (musl) бинарь
+      - name: Upload binary-aarch64-linux
         uses: actions/upload-artifact@v3
         with:
-          name: binary-aarch64
+          name: binary-aarch64-linux
           path: actions/target/aarch64-unknown-linux-musl/release/action-terraform
+
+  # ----------------- MACOS (darwin) -----------------
+  build-and-upload-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Устанавливаем нужный toolchain (зачастую достаточно rustup stable)
+      - name: Install Rust stable
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "::add-path::$HOME/.cargo/bin"
+          rustup target add x86_64-apple-darwin
+          rustup target add aarch64-apple-darwin
+
+      # Сборка x86_64-apple-darwin
+      - name: Build macOS x86_64
+        run: |
+          cd actions
+          cargo build --release --target x86_64-apple-darwin -p action-terraform
+
+      # Сборка aarch64-apple-darwin (если нужно поддержать Apple Silicon нативно)
+      - name: Build macOS aarch64
+        run: |
+          cd actions
+          cargo build --release --target aarch64-apple-darwin -p action-terraform
+
+      # Загружаем x86_64 (darwin) бинарь
+      - name: Upload binary-x86_64-macos
+        uses: actions/upload-artifact@v3
+        with:
+          name: binary-x86_64-macos
+          path: actions/target/x86_64-apple-darwin/release/action-terraform
+
+      # Загружаем aarch64 (darwin) бинарь
+      - name: Upload binary-aarch64-macos
+        uses: actions/upload-artifact@v3
+        with:
+          name: binary-aarch64-macos
+          path: actions/target/aarch64-apple-darwin/release/action-terraform
