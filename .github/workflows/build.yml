@@ -5,7 +5,7 @@ on:
     branches: [ "dev1" ]
 
 jobs:
-  build-matrix:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -13,29 +13,38 @@ jobs:
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Установить Rust (stable)
-      uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        # Или любой другой способ установить rustup + stable
 
-    - name: Поставить пакеты для сборки
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y musl-tools upx
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          # Пакеты для x86_64-unknown-linux-musl
+          sudo apt-get install -y musl-tools upx
+          # И самое главное — кросс-компилятор для aarch64-musl:
+          sudo apt-get install -y aarch64-linux-musl-gcc
 
-    - name: Добавить нужный target
-      run: |
-        rustup target add ${{ matrix.target }}
+      - name: Add target
+        run: rustup target add ${{ matrix.target }}
 
-    - name: Собрать
-      run: |
-        cd actions
-        cargo build --release --target ${{ matrix.target }} -p action-terraform
-        strip target/${{ matrix.target }}/release/action-terraform
-        upx --best --lzma target/${{ matrix.target }}/release/action-terraform
+      - name: Build
+        run: |
+          cargo build --release --target ${{ matrix.target }} -p action-terraform
+          # Для strip лучше использовать "кросс-strip" или задать RUSTFLAGS='-Clink-arg=-s' 
+          # но иногда можно обойтись и встроенным 'strip', если он умеет. 
+          # Чтобы быть полностью корректным:
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-musl" ]; then
+            aarch64-linux-musl-strip target/aarch64-unknown-linux-musl/release/action-terraform
+          else
+            strip target/${{ matrix.target }}/release/action-terraform
+          fi
+          upx --best --lzma target/${{ matrix.target }}/release/action-terraform
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.target }}-action-terraform
-        path: target/${{ matrix.target }}/release/action-terraform
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}-action-terraform
+          path: target/${{ matrix.target }}/release/action-terraform
