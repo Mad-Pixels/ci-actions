@@ -7,8 +7,20 @@ on:
     branches: [ '**' ]
 
 jobs:
-  check:
-    uses: Mad-Pixels/github-workflows/.github/workflows/rust-ci.yml@dev
-    with:
-      working-directory: "./actions"
-      binaries: '["terraform", "other-binary"]'
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Discover binaries
+        id: discover-binaries
+        run: |
+          BINARIES=$(ls actions/bin | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "binaries=$BINARIES" >> $GITHUB_ENV
+
+      - name: Run Rust CI workflow
+        uses: Mad-Pixels/github-workflows/.github/workflows/rust-ci.yml@dev
+        with:
+          working-directory: "./actions"
+          binaries: ${{ env.binaries }}
