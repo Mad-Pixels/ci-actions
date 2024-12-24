@@ -6,10 +6,10 @@ on:
 
 jobs:
   check:
-    uses: Mad-Pixels/github-workflows/.github/workflows/rust-build.yml@dev
+    uses: Mad-Pixels/github-workflows/workflows/rust/check.yml@dev
     with:
       working-directory: "./actions"
-      binaries: '["terraform"]'
+      # binaries: '["terraform"]'
 
 
 
