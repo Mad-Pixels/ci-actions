@@ -28,5 +28,3 @@ jobs:
       working-directory: "./actions"
       binaries-directory: "bin"
       version: ${{ github.ref }}
-    secrets:
-      PAT: ${{ secrets.PAT }}
