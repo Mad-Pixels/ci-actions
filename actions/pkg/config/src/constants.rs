@@ -9,7 +9,7 @@ pub const ENV_MASK: &str = "ACTION_MASK";
 pub const ENV_LOG_LEVEL: &str = "ACTION_LOG_LEVEL";
 pub const ENV_WORKING_DIR: &str = "ACTION_WORKING_DIR";
 
-// Default values
+// Default values.
 pub const DEFAULT_LOG_LEVEL: &str = "info";
 pub const DEFAULT_WORKING_DIR: &str = ".";
 pub const DEFAULT_MASK: &str = "*****";
