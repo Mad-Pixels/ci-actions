@@ -17,7 +17,27 @@ on:
       - "actions/**/Cargo.lock"
 
 jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rust-changes: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'actions/**.rs'
+              - 'actions/**/Cargo.toml'
+              - 'actions/**/Cargo.lock'
+
   rust-ci:
+    if: |
+      needs.check-changes.outputs.rust-changes == 'true' &&
+      (github.event_name != 'push' || 
+       !(github.event.ref == format('refs/heads/{0}', github.event.pull_request.head.ref)))
+    needs: check-changes
     uses: Mad-Pixels/github-workflows/.github/workflows/rust-ci.yml@dev
     with:
       working-directory: "./actions"
