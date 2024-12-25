@@ -18,25 +18,7 @@ on:
 
 jobs:
   check-pr:
-    runs-on: ubuntu-latest
-    outputs:
-      should-run: ${{ steps.check.outputs.should-run }}
-    steps:
-      - id: check
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "should-run=true" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event_name }}" == "push" && ! "${{ github.ref }}" =~ ^refs/heads/.*$ ]]; then
-            echo "should-run=true" >> $GITHUB_OUTPUT
-          else
-            PR_NUMBER=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" | jq '. | length')
-            if [[ "$PR_NUMBER" == "0" ]]; then
-              echo "should-run=true" >> $GITHUB_OUTPUT
-            else
-              echo "should-run=false" >> $GITHUB_OUTPUT
-            fi
-          fi
+    uses: Mad-Pixels/github-workflows/.github/workflows/check-pr.yml@dev
 
   rust-ci:
     needs: check-pr
