@@ -17,27 +17,30 @@ on:
       - "actions/**/Cargo.lock"
 
 jobs:
-  check-changes:
+  check-pr:
     runs-on: ubuntu-latest
     outputs:
-      rust-changes: ${{ steps.filter.outputs.rust }}
+      should-run: ${{ steps.check.outputs.should-run }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            rust:
-              - 'actions/**.rs'
-              - 'actions/**/Cargo.toml'
-              - 'actions/**/Cargo.lock'
+      - id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "push" && ! "${{ github.ref }}" =~ ^refs/heads/.*$ ]]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+          else
+            PR_NUMBER=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" | jq '. | length')
+            if [[ "$PR_NUMBER" == "0" ]]; then
+              echo "should-run=true" >> $GITHUB_OUTPUT
+            else
+              echo "should-run=false" >> $GITHUB_OUTPUT
+            fi
+          fi
 
   rust-ci:
-    if: |
-      needs.check-changes.outputs.rust-changes == 'true' &&
-      (github.event_name != 'push' || 
-       !(github.event.ref == format('refs/heads/{0}', github.event.pull_request.head.ref)))
-    needs: check-changes
+    needs: check-pr
+    if: needs.check-pr.outputs.should-run == 'true'
     uses: Mad-Pixels/github-workflows/.github/workflows/rust-ci.yml@dev
     with:
       working-directory: "./actions"
