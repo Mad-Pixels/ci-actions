@@ -16,4 +16,4 @@ jobs:
       binaries-directory: "bin"
       version: ${{ github.ref }}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.PAT }}
+      PAT: ${{ secrets.PAT }}
