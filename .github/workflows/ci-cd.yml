@@ -14,11 +14,14 @@ on:
 
 jobs:
   check-pr:
+    if: github.ref != 'refs/heads/main'
     uses: Mad-Pixels/github-workflows/.github/workflows/check-pr.yml@dev
 
   rust-ci:
     needs: check-pr
-    if: needs.check-pr.outputs.should-run == 'true'
+    if: |
+      always() &&
+      (github.ref == 'refs/heads/main' || needs.check-pr.outputs.should-run == 'true')
     uses: Mad-Pixels/github-workflows/.github/workflows/rust-ci.yml@dev
     with:
       working-directory: "./actions"
