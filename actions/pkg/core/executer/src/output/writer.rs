@@ -1,0 +1,71 @@
+use super::formatter;
+use super::types::Target;
+use formatter::PlainFormatter;
+use slog::{o, Drain, Logger};
+use std::fs::OpenOptions;
+use std::io::Write;
+
+/// Handles writing log messages to different targets.
+#[derive(Clone)]
+pub(crate) struct Writer {
+    logger: Logger,
+}
+
+impl Writer {
+    /// Creates a new `Writer` instance.
+    pub fn new() -> Self {
+        let drain = slog_async::Async::new(PlainFormatter.fuse()).build().fuse();
+        Self {
+            logger: Logger::root(drain, o!()),
+        }
+    }
+
+    /// Writes a log message to the specified target.
+    ///
+    /// # Arguments
+    ///
+    /// * `line` - The log message to be written.
+    /// * `target` - The target where the message should be written.
+    pub fn write(&self, line: &str, target: &Target) {
+        match target {
+            Target::Stdout => slog::info!(self.logger, "{}", line), //println!("{}", line),
+            Target::Stderr => {
+                //slog::error!(self.logger, "{}", line),//eprintln!("{}", line),
+                if line.contains("Error:") || line.contains("error:") {
+                    slog::error!(self.logger, "{}", line);
+                } else if line.contains("Warning:") || line.contains("warning:") {
+                    slog::warn!(self.logger, "{}", line);
+                } else {
+                    slog::info!(self.logger, "{}", line);
+                }
+            }
+            Target::File(path) => {
+                let mut file = OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(path)
+                    .expect("Failed to open output file");
+
+                writeln!(file, "{}", line).expect("Failed to write to file");
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_file_writer() {
+        let writer = Writer::new();
+        let temp_dir = tempdir().unwrap();
+        let file_path = temp_dir.path().join("test.log");
+
+        writer.write("test line", &Target::File(file_path.clone()));
+
+        let content = std::fs::read_to_string(file_path).unwrap();
+        assert_eq!(content.trim(), "test line");
+    }
+}
