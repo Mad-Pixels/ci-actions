@@ -6,15 +6,15 @@ on:
     tags:
       - 'v*.*.*'
     paths:
-      - "**.rs"
-      - "**/Cargo.toml"
-      - "**/Cargo.lock"
+      - "actions/**.rs"
+      - "actions/**/Cargo.toml"
+      - "actions/**/Cargo.lock"
   pull_request:
     branches: [ '**' ]
     paths:
-      - "**.rs"
-      - "**/Cargo.toml"
-      - "**/Cargo.lock"
+      - "actions/**.rs"
+      - "actions/**/Cargo.toml"
+      - "actions/**/Cargo.lock"
 
 jobs:
   rust-ci:
