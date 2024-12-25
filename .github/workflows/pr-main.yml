@@ -1,8 +1,8 @@
-name: Commit
+name: PR Main
 
 on:
-  push:
-    branches-ignore:
+  pull_request:
+    branches:
       - main
     paths:
       - "actions/**.rs"
@@ -14,3 +14,11 @@ jobs:
     uses: Mad-Pixels/github-workflows/.github/workflows/rust-check.yml@dev
     with:
       working-directory: "./actions"
+  
+  bin:
+    needs: qa
+    uses: Mad-Pixels/github-workflows/.github/workflows/rust-build.yml@dev
+    with:
+      working-directory: "./actions"
+      crates-path: "bin"
+      artifacts: "binaries"
