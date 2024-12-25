@@ -11,10 +11,6 @@ on:
       - "actions/**/Cargo.lock"
   pull_request:
     branches: [ '**' ]
-    paths:
-      - "actions/**.rs"
-      - "actions/**/Cargo.toml"
-      - "actions/**/Cargo.lock"
 
 jobs:
   check-pr:
