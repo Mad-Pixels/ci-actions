@@ -1,0 +1,48 @@
+name: Push Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        required: true
+        type: string
+        description: 'Release version'
+
+jobs:
+  discover:
+    runs-on: ubuntu-24.04
+    outputs:
+      binaries: ${{ steps.filter.outputs.binaries }}
+    steps:
+      - name: Download Release Assets
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Filter Binaries
+        id: filter 
+        run: |
+          mkdir -p linux-artifacts
+          for artifact in artifacts/*; do
+            if [[ "$(basename "$artifact")" == *"linux"* ]]; then
+              cp -r "$artifact" linux-artifacts/
+            fi
+          done 
+          echo "binaries=linux-artifacts" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    needs: discover
+    uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-push.yml@dev
+    strategy:
+      fail-fast: true
+      matrix:
+        version: [ "1.5.7", "1.6.0", "1.6.1" ]
+    with: 
+      dockerfile: images/Dockerfile.terraform
+      repository: "action-terraform"
+      tag: ${{ matrix.version }}
+      build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
+      platforms: "linux/amd64,linux/arm64"
+    secrets:
+      dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
+      dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
