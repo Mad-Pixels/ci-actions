@@ -53,7 +53,7 @@ jobs:
     uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-push.yml@dev
     with: 
       context: docker-context  
-      dockerfile: images/Dockerfile.terraform
+      dockerfile: Dockerfile.terraform
       repository: "action-terraform"
       tag: ${{ inputs.release }}_tf${{ matrix.version }}
       build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
