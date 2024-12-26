@@ -55,6 +55,7 @@ jobs:
       context: docker-context  
       dockerfile: Dockerfile.terraform
       repository: "action-terraform"
+      image_name: "madpixels/action-terraform"
       tag: ${{ inputs.release }}_tf${{ matrix.version }}
       build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
       platforms: "linux/amd64,linux/arm64"
