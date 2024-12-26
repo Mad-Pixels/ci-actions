@@ -1,21 +1,25 @@
 name: Release
 
 on:
- push:
-   branches:
-     - main
-   tags:
-     - "v[0-9]+.[0-9]+.[0-9]+"
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
+  verify:
+    uses: Mad-Pixels/github-workflows/.github/workflows/github-tag.yml@dev
+
   bin:
+    needs: verify
+    if: needs.verify.outputs.is_main == 'true'
     uses: Mad-Pixels/github-workflows/.github/workflows/rust-build.yml@dev
     with:
       working-directory: "./actions"
       crates-path: "bin"
   
   create:
-    needs: bin
+    needs: [verify, bin]
+    if: needs.verify.outputs.is_main == 'true'
     uses: Mad-Pixels/github-workflows/.github/workflows/github-release.yml@dev
     with:
       tag: ${{ github.ref_name }}
