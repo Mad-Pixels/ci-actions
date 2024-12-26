@@ -20,6 +20,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+      
+      - name: Check artifacts
+        run: |
+          echo "Artifacts directory content:"
+          ls -R artifacts/
 
       - name: Prepare Docker Context
         id: prepare
