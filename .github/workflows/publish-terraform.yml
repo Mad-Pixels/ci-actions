@@ -17,14 +17,13 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Download Release Assets
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      
-      - name: Check artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Artifacts directory content:"
-          ls -R artifacts/
+          mkdir -p artifacts
+          gh release download ${{ inputs.release }} \
+            --pattern "*linux*" \
+            --dir artifacts
 
       - name: Prepare Docker Context
         id: prepare
@@ -32,14 +31,12 @@ jobs:
           mkdir -p docker-context
           cp images/Dockerfile.terraform docker-context/
           
-          for artifact in artifacts/*linux*/*; do
-            echo $artifact
-            if [ -f "$artifact" ]; then
-              cp "$artifact" docker-context/
-            fi
-          done
-          ls -all
-          ls docker-context/ 
+          echo "Copying release assets to docker context:"
+          cp artifacts/action-terraform_linux_* docker-context/
+          
+          echo "Final docker-context content:"
+          ls -la docker-context/
+          
           echo "context=docker-context" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
