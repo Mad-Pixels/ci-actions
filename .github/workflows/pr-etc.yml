@@ -2,12 +2,9 @@ name: PR Etc
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
     branches-ignore:
       - main
-    paths:
-      - "actions/**.rs"
-      - "actions/**/Cargo.toml"
-      - "actions/**/Cargo.lock"
 
 jobs:
   qa:

@@ -2,12 +2,9 @@ name: PR Main
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - main
-    paths:
-      - "actions/**.rs"
-      - "actions/**/Cargo.toml"
-      - "actions/**/Cargo.lock"
 
 jobs:
   qa:
