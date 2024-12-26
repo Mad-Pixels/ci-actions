@@ -16,6 +16,6 @@ RUN apk add --no-cache curl unzip \
     && rm "terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip" \
     && chmod +x /usr/local/bin/terraform
 
-COPY binaries/${TARGETARCH}/${BINARY_NAME} /usr/local/bin/
-RUN chmod +x /usr/local/bin/${BINARY_NAME}
-ENTRYPOINT ["/usr/local/bin/action-terraform"]
+COPY action-terraform_linux_${TARGETARCH} /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint"]

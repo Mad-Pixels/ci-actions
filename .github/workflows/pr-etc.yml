@@ -1,0 +1,16 @@
+name: PR Etc
+
+on:
+  pull_request:
+    branches-ignore:
+      - main
+    paths:
+      - "actions/**.rs"
+      - "actions/**/Cargo.toml"
+      - "actions/**/Cargo.lock"
+
+jobs:
+  qa:
+    uses: Mad-Pixels/github-workflows/.github/workflows/rust-check.yml@dev
+    with:
+      working-directory: "./actions"

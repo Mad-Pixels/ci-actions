@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "bin/terraform",
+    "bin/action-terraform",
 
     "pkg/util",
     "pkg/config",
