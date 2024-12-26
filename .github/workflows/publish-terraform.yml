@@ -6,22 +6,22 @@ on:
       release:
         required: true
         type: string
-        description: 'Release version'
+        description: "GitHub release tag (semver)."
 
 jobs:
-  prepare:
+  discover:
     runs-on: ubuntu-24.04
     outputs:
-      docker-context: ${{ steps.prepare.outputs.context }}
-      sanitized-tag: ${{ steps.sanitize.outputs.tag }}
+      docker-context: ${{ steps.docker-context.outputs.context }}
+      image-tag-prefix: ${{ steps.image-tag-prefix.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Remove leading 'v' from release
-        id: sanitize
+      - name: Prepare Image Tag Prefix 
+        id: image-tag-prefix
         run: |
-          SANITIZED_TAG=$(echo "${{ inputs.release }}" | sed 's/^v//')
-          echo "tag=$SANITIZED_TAG" >> $GITHUB_OUTPUT
+          PREFIX_TAG=$(echo "${{ inputs.release }}" | sed 's/^v//')
+          echo "tag=$PREFIX_TAG" >> $GITHUB_OUTPUT
 
       - name: Download Release Assets
         env:
@@ -33,17 +33,16 @@ jobs:
             --dir artifacts
 
       - name: Prepare Docker Context
-        id: prepare
+        id: docker-context
         run: |
           mkdir -p docker-context
-          cp images/Dockerfile.terraform docker-context/
+          cp images/Dockerfile.terraform docker-context/Dockerfile
 
           echo "Copying release assets to docker context:"
           cp artifacts/action-terraform_linux_* docker-context/
 
           echo "Final docker-context content:"
           ls -la docker-context/
-
           echo "context=docker-context" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
@@ -52,19 +51,18 @@ jobs:
           path: docker-context/
 
   build-and-push:
-    needs: prepare
+    needs: discover
     strategy:
       fail-fast: true
       matrix:
         version: [ "1.5.7", "1.6.0", "1.6.1" ]
-    uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-push.yml@dev
-    with: 
-      context: docker-context  
-      dockerfile: Dockerfile.terraform
-      repository: "madpixels/action-terraform"
-      tag: ${{ needs.prepare.outputs.sanitized-tag }}_tf${{ matrix.version }}
+    uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-build-push.yml@main
+    with:
+      tag: ${{ needs.discover.outputs.image-tag-prefix }}_tf${{ matrix.version }}
       build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
+      repository: "madpixels/action-terraform"
       platforms: "linux/amd64,linux/arm64"
+      context: docker-context
     secrets:
       dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
       dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}

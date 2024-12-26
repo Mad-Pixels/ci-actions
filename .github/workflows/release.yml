@@ -7,12 +7,12 @@ on:
 
 jobs:
   verify:
-    uses: Mad-Pixels/github-workflows/.github/workflows/github-tag.yml@dev
+    uses: Mad-Pixels/github-workflows/.github/workflows/github-tag.yml@main
 
   bin:
     needs: verify
     if: needs.verify.outputs.is_main == 'true'
-    uses: Mad-Pixels/github-workflows/.github/workflows/rust-build.yml@dev
+    uses: Mad-Pixels/github-workflows/.github/workflows/rust-build.yml@main
     with:
       working-directory: "./actions"
       crates-path: "bin"
@@ -20,6 +20,6 @@ jobs:
   publish:
     needs: [verify, bin]
     if: needs.verify.outputs.is_main == 'true'
-    uses: Mad-Pixels/github-workflows/.github/workflows/github-release.yml@dev
+    uses: Mad-Pixels/github-workflows/.github/workflows/github-release.yml@main
     with:
       tag: ${{ github.ref_name }}
