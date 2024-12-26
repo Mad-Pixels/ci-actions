@@ -21,4 +21,3 @@ jobs:
     with:
       working-directory: "./actions"
       crates-path: "bin"
-      artifacts: "binaries"
