@@ -14,6 +14,8 @@ jobs:
       working-directory: "./actions"
       crates-path: "bin"
   
-  upload:
+  create:
     needs: bin
     uses: Mad-Pixels/github-workflows/.github/workflows/github-release.yml@dev
+    with:
+      tag: ${{ github.ref_name }}
