@@ -9,36 +9,47 @@ on:
         description: 'Release version'
 
 jobs:
-  discover:
+  prepare:
     runs-on: ubuntu-24.04
     outputs:
-      binaries: ${{ steps.filter.outputs.binaries }}
+      docker-context: ${{ steps.prepare.outputs.context }}
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Download Release Assets
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-      
-      - name: Filter Binaries
-        id: filter 
+
+      - name: Prepare Docker Context
+        id: prepare
         run: |
-          mkdir -p linux-artifacts
-          for artifact in artifacts/*; do
-            if [[ "$(basename "$artifact")" == *"linux"* ]]; then
-              cp -r "$artifact" linux-artifacts/
+          mkdir -p docker-context
+          cp images/Dockerfile.terraform docker-context/
+          
+          for artifact in artifacts/*linux*/*; do
+            if [ -f "$artifact" ]; then
+              cp "$artifact" docker-context/
             fi
-          done 
-          echo "binaries=linux-artifacts" >> "$GITHUB_OUTPUT"
+          done
+          
+          echo "context=docker-context" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-context
+          path: docker-context/
 
   build-and-push:
-    needs: discover
-    uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-push.yml@dev
+    needs: prepare
     strategy:
       fail-fast: true
       matrix:
         version: [ "1.5.7", "1.6.0", "1.6.1" ]
+    uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-push.yml@dev
     with: 
-      dockerfile: images/Dockerfile.terraform
+      context: docker-context  
+      dockerfile: Dockerfile.terraform
       repository: "action-terraform"
       tag: ${{ inputs.release }}-${{ matrix.version }}
       build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
