@@ -17,7 +17,7 @@ jobs:
       working-directory: "./actions"
       crates-path: "bin"
   
-  create:
+  publish:
     needs: [verify, bin]
     if: needs.verify.outputs.is_main == 'true'
     uses: Mad-Pixels/github-workflows/.github/workflows/github-release.yml@dev

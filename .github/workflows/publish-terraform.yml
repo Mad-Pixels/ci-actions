@@ -40,7 +40,7 @@ jobs:
     with: 
       dockerfile: images/Dockerfile.terraform
       repository: "action-terraform"
-      tag: ${{ matrix.version }}
+      tag: ${{ inputs.release }}-${{ matrix.version }}
       build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
       platforms: "linux/amd64,linux/arm64"
     secrets:
