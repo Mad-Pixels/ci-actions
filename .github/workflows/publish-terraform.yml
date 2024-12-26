@@ -13,9 +13,16 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       docker-context: ${{ steps.prepare.outputs.context }}
+      sanitized-tag: ${{ steps.sanitize.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
-      
+
+      - name: Remove leading 'v' from release
+        id: sanitize
+        run: |
+          SANITIZED_TAG=$(echo "${{ inputs.release }}" | sed 's/^v//')
+          echo "tag=$SANITIZED_TAG" >> $GITHUB_OUTPUT
+
       - name: Download Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -30,13 +37,13 @@ jobs:
         run: |
           mkdir -p docker-context
           cp images/Dockerfile.terraform docker-context/
-          
+
           echo "Copying release assets to docker context:"
           cp artifacts/action-terraform_linux_* docker-context/
-          
+
           echo "Final docker-context content:"
           ls -la docker-context/
-          
+
           echo "context=docker-context" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
@@ -55,7 +62,7 @@ jobs:
       context: docker-context  
       dockerfile: Dockerfile.terraform
       repository: "madpixels/action-terraform"
-      tag: ${{ inputs.release | replace('v', '') }}_tf${{ matrix.version }}
+      tag: ${{ needs.prepare.outputs.sanitized-tag }}_tf${{ matrix.version }}
       build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
       platforms: "linux/amd64,linux/arm64"
     secrets:
