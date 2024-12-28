@@ -27,6 +27,8 @@ impl Writer {
     /// * `line` - The log message to be written.
     /// * `target` - The target where the message should be written.
     pub fn write(&self, line: &str, target: &Target) {
+        eprintln!("DEBUG - Raw input line length: {}", line.len());
+        eprintln!("DEBUG - First 50 chars: {}", &line[..50.min(line.len())]);
         let safe_line = if !line.starts_with("::log::") {
             format!("::log::{}", line)
         } else {
