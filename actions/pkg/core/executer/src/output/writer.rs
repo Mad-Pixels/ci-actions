@@ -27,23 +27,15 @@ impl Writer {
     /// * `line` - The log message to be written.
     /// * `target` - The target where the message should be written.
     pub fn write(&self, line: &str, target: &Target) {
-        eprintln!("DEBUG - Raw input line length: {}", line.len());
-        eprintln!("DEBUG - First 50 chars: {}", &line[..50.min(line.len())]);
-        let safe_line = if !line.starts_with("::log::") {
-            format!("::log::{}", line)
-        } else {
-            line.to_string()
-        };
-
         match target {
-            Target::Stdout => slog::info!(self.logger, "{}", safe_line),
+            Target::Stdout => slog::info!(self.logger, "{}", line),
             Target::Stderr => {
                 if line.contains("Error:") || line.contains("error:") {
-                    slog::error!(self.logger, "{}", safe_line);
+                    slog::error!(self.logger, "{}", line);
                 } else if line.contains("Warning:") || line.contains("warning:") {
-                    slog::warn!(self.logger, "{}", safe_line);
+                    slog::warn!(self.logger, "{}", line);
                 } else {
-                    slog::info!(self.logger, "{}", safe_line);
+                    slog::info!(self.logger, "{}", line);
                 }
             }
             Target::File(path) => {
