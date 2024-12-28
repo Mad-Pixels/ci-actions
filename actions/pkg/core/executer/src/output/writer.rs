@@ -27,8 +27,12 @@ impl Writer {
     /// * `line` - The log message to be written.
     /// * `target` - The target where the message should be written.
     pub fn write(&self, line: &str, target: &Target) {
-        let safe_line = format!("::log::{}", line);
-
+        let safe_line = if !line.starts_with("::log::") {
+            format!("::log::{}", line)
+        } else {
+            line.to_string()
+        };
+        
         match target {
             Target::Stdout => slog::info!(self.logger, "{}", safe_line),
             Target::Stderr => {
@@ -46,7 +50,7 @@ impl Writer {
                     .append(true)
                     .open(path)
                     .expect("Failed to open output file");
-
+    
                 writeln!(file, "{}", line).expect("Failed to write to file");
             }
         }

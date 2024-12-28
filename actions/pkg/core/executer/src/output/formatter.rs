@@ -9,7 +9,8 @@ impl slog::Drain for PlainFormatter {
     type Ok = ();
 
     fn log(&self, record: &Record, _values: &OwnedKVList) -> Result<Self::Ok, Self::Err> {
-        println!("::log::{}", record.msg());
+        let msg = record.msg();
+        println!("{}", msg.to_string());
         Ok(())
     }
 }
