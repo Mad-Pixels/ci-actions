@@ -20,3 +20,9 @@ impl TerraformBackend {
         self.environment.values().map(|s| s.as_str()).collect()
     }
 }
+
+impl Default for TerraformBackend {
+    fn default() -> Self {
+        Self::new()
+    }
+}
