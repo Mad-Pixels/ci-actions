@@ -7,7 +7,7 @@ on:
 
 jobs:
   verify:
-    uses: Mad-Pixels/github-workflows/.github/workflows/github-check-tag.yml.yml@main
+    uses: Mad-Pixels/github-workflows/.github/workflows/github-check-tag.yml@main
 
   bin:
     needs: verify
