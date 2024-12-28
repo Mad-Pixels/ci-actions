@@ -3,8 +3,10 @@ pub mod command;
 pub mod constants;
 pub mod error;
 
+pub mod backend;
 pub mod environments;
 pub mod executor;
+pub use backend::TerraformBackend;
 pub use constants::*;
 pub use environments::TerraformEnv;
 

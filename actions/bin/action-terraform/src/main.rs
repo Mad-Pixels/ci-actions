@@ -1,6 +1,8 @@
 use config::MainConfig;
 use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
-use terraform::{executor::TerraformExecutor, CommandChain, TerraformConfig, TerraformEnv};
+use terraform::{
+    executor::TerraformExecutor, CommandChain, TerraformBackend, TerraformConfig, TerraformEnv,
+};
 
 use provider::auto_detect;
 use util::init_logger;
@@ -94,7 +96,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
+    let backend = TerraformBackend::new();
     let envs = TerraformEnv::new();
+
     let masker_provider_output = match MaskerRegex::new(
         provider.get_predefined_masked_objects(),
         &mask,
@@ -106,11 +110,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
     let masker_provider_credentials = MaskerEqual::new(provider.values(), &mask);
+    let makser_terraform_backend = MaskerEqual::new(backend.values(), &mask);
     let masker_terraform_envs = MaskerEqual::new(envs.values(), &mask);
 
     let processors = ProcessorCollection::new(vec![
         ProcessorItem::Regex(masker_provider_output),
         ProcessorItem::Equal(masker_provider_credentials),
+        ProcessorItem::Equal(makser_terraform_backend),
         ProcessorItem::Equal(masker_terraform_envs),
     ]);
     slog::info!(logger, "Action was initialized");
@@ -118,6 +124,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let executor = TerraformExecutor::new(processors, bin);
     let chain = CommandChain::new(cwd)
         .with_vars(envs.as_map().clone())
+        .with_backend_config(backend.environment)
         .with_workspace(workspace)
         .with_out(Some(output));
     let commands = chain.plan_chain();
