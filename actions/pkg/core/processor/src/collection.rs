@@ -69,8 +69,25 @@ impl Processor for ProcessorCollection {
     /// assert_eq!(output, "My *** is **** and my *** is ****");
     /// ```
     fn process(&self, input: &str) -> String {
-        self.processors
-            .iter()
-            .fold(input.to_string(), |acc, processor| processor.process(&acc))
+        eprintln!("DEBUG - Before masking: {}", input);
+        let result = self.processors.iter().fold(input.to_string(), |acc, processor| {
+            match processor {
+                ProcessorItem::Equal(m) => {
+                    let res = m.process(&acc);
+                    eprintln!("DEBUG - After Equal mask: {}", res);
+                    res
+                },
+                ProcessorItem::Regex(m) => {
+                    let res = m.process(&acc);
+                    eprintln!("DEBUG - After Regex mask: {}", res);
+                    res
+                }
+            }
+        });
+        eprintln!("DEBUG - Final result: {}", result);
+        result
+        // self.processors
+        //     .iter()
+        //     .fold(input.to_string(), |acc, processor| processor.process(&acc))
     }
 }
