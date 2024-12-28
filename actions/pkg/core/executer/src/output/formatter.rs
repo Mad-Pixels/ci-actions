@@ -10,7 +10,7 @@ impl slog::Drain for PlainFormatter {
 
     fn log(&self, record: &Record, _values: &OwnedKVList) -> Result<Self::Ok, Self::Err> {
         let msg = record.msg();
-        println!("{}", msg.to_string());
+        println!("{}", msg);
         Ok(())
     }
 }

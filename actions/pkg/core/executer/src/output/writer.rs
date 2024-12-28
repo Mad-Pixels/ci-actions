@@ -32,7 +32,7 @@ impl Writer {
         } else {
             line.to_string()
         };
-        
+
         match target {
             Target::Stdout => slog::info!(self.logger, "{}", safe_line),
             Target::Stderr => {
@@ -50,7 +50,7 @@ impl Writer {
                     .append(true)
                     .open(path)
                     .expect("Failed to open output file");
-    
+
                 writeln!(file, "{}", line).expect("Failed to write to file");
             }
         }
