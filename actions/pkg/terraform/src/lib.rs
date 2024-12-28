@@ -6,9 +6,9 @@ pub mod error;
 pub mod backend;
 pub mod environments;
 pub mod executor;
+pub use backend::TerraformBackend;
 pub use constants::*;
 pub use environments::TerraformEnv;
-pub use backend::TerraformBackend;
 
 pub use chain::CommandChain;
 use config::ConfigResult;

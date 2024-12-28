@@ -1,6 +1,8 @@
 use config::MainConfig;
 use processor::{MaskerEqual, MaskerRegex, ProcessorCollection, ProcessorItem};
-use terraform::{executor::TerraformExecutor, CommandChain, TerraformConfig, TerraformEnv, TerraformBackend};
+use terraform::{
+    executor::TerraformExecutor, CommandChain, TerraformBackend, TerraformConfig, TerraformEnv,
+};
 
 use provider::auto_detect;
 use util::init_logger;

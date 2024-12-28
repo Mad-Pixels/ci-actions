@@ -3,9 +3,9 @@ use std::env;
 
 pub struct TerraformBackend {
     pub environment: HashMap<String, String>,
- }
- 
- impl TerraformBackend {
+}
+
+impl TerraformBackend {
     pub fn new() -> Self {
         Self {
             environment: env::vars()
@@ -19,4 +19,4 @@ pub struct TerraformBackend {
     pub fn values(&self) -> Vec<&str> {
         self.environment.values().map(|s| s.as_str()).collect()
     }
- }
+}
