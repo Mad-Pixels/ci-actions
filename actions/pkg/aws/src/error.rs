@@ -1,15 +1,16 @@
 use thiserror::Error;
 
+/// Represents the different errors that can occur when executing AWS commands.
 #[derive(Error, Debug)]
-pub enum AWSError {
+pub enum AwsError {
+    /// Error when an AWS command fails.
     #[error("AWS command failed: {0}")]
     CommandError(String),
 
-    #[error("S3 operation error: {0}")]
-    S3Error(String),
-
+    /// Error from the underlying executor.
     #[error(transparent)]
     ExecuterError(#[from] executer::ExecuterError),
 }
 
-pub type AWSResult<T> = Result<T, AWSError>;
+/// A type alias for results returned by AWS operations.
+pub type AwsResult<T> = Result<T, AwsError>;

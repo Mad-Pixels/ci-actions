@@ -89,6 +89,7 @@ impl TerraformCommand {
     ///     args,
     ///     vec![
     ///         "init".to_string(),
+    ///         "-reconfigure".to_string(),
     ///         "-backend-config=key1=value1".to_string(),
     ///         "-backend-config=key2=value2".to_string()
     ///     ]

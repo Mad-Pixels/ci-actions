@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 executer = { path = "../core/executer" }
 processor = { path = "../core/processor" }
+provider = { path = "../core/provider" }
 config = { path = "../config" }
 lazy_static = "1.4.0"
 thiserror = "2.0.9"
