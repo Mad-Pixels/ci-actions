@@ -89,7 +89,7 @@ impl AwsExecutor {
     /// use std::collections::HashMap;
     /// use std::path::PathBuf;
     /// use executer::{Output, Subprocess, Target, Validator};
-    /// 
+    ///
     /// # fn main() {
     /// let env = HashMap::new();
     /// let provider = AWSProvider::new(env);
@@ -135,7 +135,7 @@ impl AwsExecutor {
     /// use provider::{AWSProvider, Provider};
     /// use std::collections::HashMap;
     /// use executer::{Output, Subprocess, Target, Validator};
-    /// 
+    ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), AwsError> {
     ///     let env = HashMap::new();
@@ -205,7 +205,7 @@ impl AwsExecutor {
     /// # use provider::{AWSProvider, Provider};
     /// # use executer::{Output, Subprocess, Target, Validator};
     /// # use std::collections::HashMap;
-    /// # 
+    /// #
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), AwsError> {
     /// # let env = HashMap::new();
@@ -274,7 +274,7 @@ impl AwsExecutor {
     /// # use provider::{AWSProvider, Provider};
     /// # use executer::{Output, Subprocess, Target, Validator};
     /// # use std::collections::HashMap;
-    /// # 
+    /// #
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), AwsError> {
     /// # let env = HashMap::new();
@@ -347,7 +347,7 @@ impl AwsExecutor {
     /// # use provider::{AWSProvider, Provider};
     /// # use executer::{Output, Subprocess, Target, Validator};
     /// # use std::collections::HashMap;
-    /// # 
+    /// #
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), AwsError> {
     /// # let env = HashMap::new();
