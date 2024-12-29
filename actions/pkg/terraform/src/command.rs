@@ -100,7 +100,7 @@ impl TerraformCommand {
                 dir: _,
                 backend_config,
             } => {
-                let mut args = vec!["init".to_string()];
+                let mut args = vec!["init".to_string(), "-reconfigure".to_string()];
                 if let Some(config) = backend_config {
                     let mut keys: Vec<_> = config.keys().collect();
                     keys.sort();
