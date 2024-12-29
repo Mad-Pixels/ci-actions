@@ -64,5 +64,5 @@ jobs:
       platforms: "linux/amd64,linux/arm64"
       context: docker-context
     secrets:
-      dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
-      dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
+      USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
