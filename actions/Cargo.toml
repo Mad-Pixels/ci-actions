@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "bin/action-terraform",
 
+    "pkg/aws",
     "pkg/util",
     "pkg/config",
     "pkg/terraform",
