@@ -4,7 +4,6 @@ use std::path::PathBuf;
 
 pub const ENV_AWS_CMD: &str = "ACTION_AWS_CMD";
 pub const ENV_AWS_BIN: &str = "ACTION_AWS_BIN";
-
 pub const DEFAULT_AWS_BIN: &str = "/usr/local/bin/aws";
 
 lazy_static! {
