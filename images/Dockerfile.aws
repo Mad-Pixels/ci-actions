@@ -1,21 +1,10 @@
-FROM alpine:3.19
-
 ARG AWS_VERSION
 ARG TARGETARCH
 ARG BINARY_NAME=action-aws
 
-RUN apk add --no-cache curl unzip \
-    && case "${TARGETARCH}" in \
-      "amd64") ARCH="x86_64" ;; \
-      "arm64") ARCH="aarch64" ;; \
-      *) echo "Unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
-    esac \
-    && curl "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}-${AWS_VERSION}.zip" -o "awscliv2.zip" \
-    && unzip awscliv2.zip \
-    && ./aws/install \
-    && rm -rf aws awscliv2.zip \
-    && aws --version
+FROM amazon/aws-cli:${AWS_VERSION}
 
 COPY ${BINARY_NAME}_linux_${TARGETARCH} /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
+
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
