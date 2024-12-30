@@ -59,7 +59,7 @@ jobs:
     uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-build-push.yml@main
     with:
       tag: ${{ needs.discover.outputs.image-tag-prefix }}_tf${{ matrix.version }}
-      build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
+      build_args: '{"AWS_VERSION": "${{ matrix.version }}"}'
       repository: "madpixels/action-aws"
       platforms: "linux/amd64,linux/arm64"
       context: docker-context
