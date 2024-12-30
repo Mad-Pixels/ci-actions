@@ -1,0 +1,15 @@
+[package]
+name = "aws"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+executer = { path = "../core/executer" }
+processor = { path = "../core/processor" }
+provider = { path = "../core/provider" }
+config = { path = "../config" }
+lazy_static = "1.4.0"
+thiserror = "2.0.9"
+async-trait = "0.1"
+slog = "2.7"
+tokio = { version = "1.0", features = ["full"] }

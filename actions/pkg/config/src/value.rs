@@ -87,6 +87,51 @@ impl ConfigValue<Required> {
     }
 }
 
+impl ConfigValue<bool> {
+    /// Retrieves the `bool` configuration value.
+    ///
+    /// # Errors
+    ///
+    /// Returns `ConfigError::RequiredValueMissing` if the environment variable
+    /// is not set and no default value is provided.
+    ///
+    /// Returns `ConfigError::InvalidValue` if parsing fails.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use config::ConfigValue;
+    /// use std::env;
+    ///
+    /// let config_value = ConfigValue::new(false, "FEATURE_FLAG");
+    /// env::set_var("FEATURE_FLAG", "true");
+    /// let value = config_value.get().unwrap();
+    /// assert!(value);
+    /// ```
+    pub fn get(&self) -> ConfigResult<bool> {
+        let val = match env::var(self.env_key) {
+            Ok(val) => val.parse::<bool>().map_err(|_| {
+                ConfigError::InvalidValue(format!(
+                    "Cannot parse boolean value for: {}",
+                    self.env_key
+                ))
+            })?,
+            Err(_) => {
+                if let Some(default) = &self.default {
+                    *default
+                } else {
+                    return Err(ConfigError::RequiredValueMissing(self.env_key.to_string()));
+                }
+            }
+        };
+
+        for validator in &self.validators {
+            validator.validate(&val)?;
+        }
+        Ok(val)
+    }
+}
+
 impl ConfigValue<String> {
     /// Retrieves the `String` configuration value.
     ///
@@ -324,6 +369,30 @@ mod tests {
         let clone_val = cloned.get().unwrap();
         assert_eq!(original, "cloned_value");
         assert_eq!(clone_val, "cloned_value");
+    }
+
+    #[test]
+    fn test_bool_with_default() {
+        let config = ConfigValue::new(false, "TEST_BOOL");
+        env::remove_var("TEST_BOOL");
+        let value = config.get().unwrap();
+        assert!(!value);
+    }
+
+    #[test]
+    fn test_bool_from_env() {
+        let config = ConfigValue::new(false, "TEST_BOOL");
+        env::set_var("TEST_BOOL", "true");
+        let value = config.get().unwrap();
+        assert!(value);
+    }
+
+    #[test]
+    fn test_bool_invalid_value() {
+        let config = ConfigValue::new(false, "TEST_BOOL");
+        env::set_var("TEST_BOOL", "not_a_bool");
+        let result = config.get();
+        assert!(matches!(result, Err(ConfigError::InvalidValue(_))));
     }
 
     #[test]
