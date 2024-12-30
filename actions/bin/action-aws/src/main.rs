@@ -96,7 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "s3_sync" => {
             let destination = match aws_config.get_destination() {
                 Ok(v) => {
-                    slog::info!(logger, "S3 destination: {:?}", v);
+                    //slog::info!(logger, "S3 destination: {:?}", v);
                     v
                 }
                 Err(e) => {

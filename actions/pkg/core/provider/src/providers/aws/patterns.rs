@@ -31,6 +31,10 @@ lazy_static! {
         r"arn:aws:ec2:[a-z0-9-]+:\d{12}:placement-group/[a-zA-Z0-9-]+".to_string(),
 
         // Storage
+        r"s3://[a-z0-9.-]{3,63}".to_string(),
+        r"s3://[a-z0-9.-]{3,63}/".to_string(),
+        r"s3://[a-z0-9.-]{3,63}/[^*]*".to_string(),
+        r"s3://[a-z0-9.-]{3,63}(/[^*]*)?".to_string(),
         r"arn:aws:s3:::[a-z0-9.-]{3,63}".to_string(),
         r"arn:aws:s3:::[a-z0-9.-]{3,63}/[^*]*".to_string(),
         r"arn:aws:efs:[a-z0-9-]+:\d{12}:file-system/fs-[a-f0-9]{8,}".to_string(),
@@ -88,6 +92,6 @@ lazy_static! {
         r"arn:aws:events:[a-z0-9-]+:\d{12}:rule/[a-zA-Z0-9-_]+".to_string(),
 
         // Common
-        r"\*".to_string(),
+        //r"\*".to_string(),
     ];
 }
