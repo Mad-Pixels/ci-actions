@@ -1,0 +1,68 @@
+name: Push Aws
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        required: true
+        type: string
+        description: "GitHub release tag (semver)."
+
+jobs:
+  discover:
+    runs-on: ubuntu-24.04
+    outputs:
+      docker-context: ${{ steps.docker-context.outputs.context }}
+      image-tag-prefix: ${{ steps.image-tag-prefix.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare Image Tag Prefix 
+        id: image-tag-prefix
+        run: |
+          PREFIX_TAG=$(echo "${{ inputs.release }}" | sed 's/^v//')
+          echo "tag=$PREFIX_TAG" >> $GITHUB_OUTPUT
+
+      - name: Download Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p artifacts
+          gh release download ${{ inputs.release }} \
+            --pattern "*linux*" \
+            --dir artifacts
+
+      - name: Prepare Docker Context
+        id: docker-context
+        run: |
+          mkdir -p docker-context
+          cp images/Dockerfile.aws docker-context/Dockerfile
+
+          echo "Copying release assets to docker context:"
+          cp artifacts/action-aws_linux_* docker-context/
+
+          echo "Final docker-context content:"
+          ls -la docker-context/
+          echo "context=docker-context" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-context
+          path: docker-context/
+
+  build-and-push:
+    needs: discover
+    strategy:
+      fail-fast: true
+      matrix:
+        version: [ "2.22.26", "1.36.31" ]
+    uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-build-push.yml@main
+    with:
+      tag: ${{ needs.discover.outputs.image-tag-prefix }}_tf${{ matrix.version }}
+      build_args: '{"TERRAFORM_VERSION": "${{ matrix.version }}"}'
+      repository: "madpixels/action-aws"
+      platforms: "linux/amd64,linux/arm64"
+      context: docker-context
+    secrets:
+      USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
