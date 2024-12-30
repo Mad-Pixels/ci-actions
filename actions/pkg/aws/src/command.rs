@@ -69,7 +69,7 @@ impl AwsCommand {
                 force,
             } => {
                 let mut args = vec![
-                    "s3".to_string(), 
+                    "s3".to_string(),
                     "sync".to_string(),
                     source.to_string_lossy().to_string(),
                     destination.to_string_lossy().to_string(),
