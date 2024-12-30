@@ -5,8 +5,11 @@ pub mod environments;
 pub mod error;
 pub mod executor;
 
+use std::path::PathBuf;
+
 pub use chain::CommandChain;
 pub use command::AwsCommand;
+use config::ConfigResult;
 pub use constants::{AWS_BIN, CMD};
 pub use environments::AwsEnv;
 pub use executor::AwsExecutor;
@@ -21,6 +24,14 @@ impl AwsConfig {
     /// Creates a new `AwsConfig` instance.
     pub fn new() -> Self {
         Self {}
+    }
+
+    pub fn get_bin(&self) -> ConfigResult<PathBuf> {
+        AWS_BIN.get()
+    }
+
+    pub fn get_cmd(&self) -> ConfigResult<String> {
+        CMD.get()
     }
 }
 

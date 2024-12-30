@@ -1,0 +1,25 @@
+[package]
+name = "action-aws"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1"
+tokio = { version = "1.0", features = ["full"] }
+tokio-stream = "0.1"
+futures = "0.3"
+slog = "2.7"
+slog-term = "2.9"
+slog-async = "2.7"
+thiserror = "2.0.9"
+async-stream = "0.3"
+util = { path = "../../pkg/util"}
+config = { path = "../../pkg/config"}
+processor = { path = "../../pkg/core/processor" }
+executer = { path = "../../pkg/core/executer"}
+aws = { path = "../../pkg/aws"}
+provider = { path = "../../pkg/core/provider" }
+
+
+[dev-dependencies]
+tokio-test = "0.4"

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 /// Represents the various AWS commands that can be executed.
 #[derive(Debug, Clone)]
 pub enum AwsCommand {
@@ -13,8 +15,8 @@ pub enum AwsCommand {
     /// - `dry_run`: Whether to perform a dry run.
     /// - `force`: Whether to force synchronization.
     S3Sync {
-        source: std::path::PathBuf,
-        destination: std::path::PathBuf,
+        source: PathBuf,
+        destination: PathBuf,
         exclude: Option<Vec<String>>,
         include: Option<Vec<String>>,
         delete: bool,
@@ -46,12 +48,11 @@ impl AwsCommand {
     /// assert_eq!(
     ///     args,
     ///     vec![
-    ///         "s3".to_string(),
     ///         "sync".to_string(),
     ///         "./local".to_string(),
     ///         "s3://my-bucket".to_string(),
     ///         "--exclude=*.tmp".to_string(),
-    ///         "--delete".to_string()
+    ///         "--delete".to_string(),
     ///     ]
     /// );
     /// ```
@@ -67,7 +68,6 @@ impl AwsCommand {
                 force,
             } => {
                 let mut args = vec![
-                    "s3".to_string(),
                     "sync".to_string(),
                     source.to_string_lossy().to_string(),
                     destination.to_string_lossy().to_string(),
