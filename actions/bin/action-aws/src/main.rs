@@ -92,17 +92,108 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let executor = AwsExecutor::new(processor, bin);
 
-    // Create command chain with working directory and environment variables
-    let chain = CommandChain::new(cwd).with_vars(envs.as_map());
+    let result = match cmd.as_str() {
+        "s3_sync" => {
+            let destination = match aws_config.get_destination() {
+                Ok(v) => {
+                    slog::info!(logger, "S3 destination: {:?}", v);
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "S3 destination not set"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
 
-    slog::info!(logger, "Starting AWS command chain");
-    let commands = chain.sync_chain();
+            let exclude = match aws_config.get_exclude() {
+                Ok(v) => {
+                    if let Some(patterns) = &v {
+                        slog::info!(logger, "Exclude patterns: {:?}", patterns);
+                    }
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "Failed to get exclude patterns"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
 
-    let result = executor.execute_chain(commands).await?;
-    if result == 0 {
+            let include = match aws_config.get_include() {
+                Ok(v) => {
+                    if let Some(patterns) = &v {
+                        slog::info!(logger, "Include patterns: {:?}", patterns);
+                    }
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "Failed to get include patterns"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
+
+            let delete = match aws_config.get_delete() {
+                Ok(v) => {
+                    if v {
+                        slog::info!(logger, "Delete option enabled");
+                    }
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "Failed to get delete option"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
+
+            let dry_run = match aws_config.get_dry_run() {
+                Ok(v) => {
+                    if v {
+                        slog::info!(logger, "Dry run mode enabled");
+                    }
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "Failed to get dry run option"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
+
+            let force = match aws_config.get_force() {
+                Ok(v) => {
+                    if v {
+                        slog::info!(logger, "Force mode enabled");
+                    }
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "Failed to get force option"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
+
+            let chain = CommandChain::new(cwd)
+                .with_vars(envs.as_map())
+                .with_destination(destination)
+                .with_exclude(exclude)
+                .with_include(include)
+                .with_delete(delete)
+                .with_dry_run(dry_run)
+                .with_force(force);
+
+            slog::info!(logger, "Starting AWS S3 sync command");
+            executor.execute_chain(chain.sync_chain()).await
+        }
+        _ => {
+            slog::error!(logger, "Unknown command: {}", cmd);
+            return Err(format!("Unknown command: {}", cmd).into());
+        }
+    };
+
+    let status = result?;
+    if status == 0 {
         slog::info!(logger, "Action {} was finished successfully", cmd);
     } else {
-        slog::error!(logger, "Action {} failed with status: {}", cmd, result);
+        slog::error!(logger, "Action {} failed with status: {}", cmd, status);
     }
+
     Ok(())
 }
