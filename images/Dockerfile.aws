@@ -4,7 +4,9 @@ ARG BINARY_NAME=action-aws
 
 FROM amazon/aws-cli:${AWS_VERSION}
 
+ARG TARGETARCH
+ARG BINARY_NAME=action-aws
+
 COPY ${BINARY_NAME}_linux_${TARGETARCH} /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
-
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
