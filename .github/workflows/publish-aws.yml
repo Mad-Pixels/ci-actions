@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        version: [ "2.22.26", "1.36.31" ]
+        version: [ "2.22.26" ]
     uses: Mad-Pixels/github-workflows/.github/workflows/dockerhub-build-push.yml@main
     with:
       tag: ${{ needs.discover.outputs.image-tag-prefix }}_tf${{ matrix.version }}
