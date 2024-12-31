@@ -127,7 +127,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_backend_config(backend.environment)
         .with_workspace(workspace)
         .with_out(Some(output));
-    let commands = chain.plan_chain();
+
+    let commands = match cmd.as_str().to_lowercase().as_str() {
+        "plan" => chain.plan_chain(),
+        "apply" => chain.apply_chain(),
+        _ => {
+            let err = format!("Unsupported command: {}", cmd);
+            slog::error!(logger, "{}", err);
+            return Err(err.into());
+        }
+    };
     slog::info!(logger, "Starting terraform plan chain"; "steps" => commands.len());
 
     let result = executor.execute_chain(commands).await?;
