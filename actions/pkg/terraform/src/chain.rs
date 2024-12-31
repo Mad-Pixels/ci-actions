@@ -100,11 +100,10 @@ impl CommandChain {
 
     pub fn apply_chain(&self) -> Vec<TerraformCommand> {
         let mut commands = vec![self.build_init()];
-
         if let Some(workspace_cmds) = self.build_workspace() {
             commands.extend(workspace_cmds);
         }
-
+        commands.push(self.build_plan());
         commands.push(self.build_apply());
         commands
     }
