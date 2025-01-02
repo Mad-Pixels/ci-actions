@@ -239,12 +239,12 @@ impl AwsExecutor {
     /// use aws::error::AwsError;
     /// use processor::{ProcessorCollection, ProcessorItem};
     /// use std::path::PathBuf;
-    /// 
+    ///
     /// # async fn example() -> Result<(), AwsError> {
     /// # let processor = ProcessorCollection::new(vec![]);
     /// # let aws_path = PathBuf::from("/usr/local/bin/aws");
     /// let executor = AwsExecutor::new(processor, aws_path);
-    /// 
+    ///
     /// executor.invalidate_cache(
     ///     "E1234567890ABCD",
     ///     vec!["/*".to_string()]
