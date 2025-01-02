@@ -182,6 +182,89 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             slog::info!(logger, "Starting AWS S3 sync command");
             executor.execute_chain(chain.sync_chain()).await
         }
+        "cloudfront_invalidate" => {
+            let distribution_id = match aws_config.get_cloudfront_distribution() {
+                Ok(v) => {
+                    slog::info!(logger, "CloudFront distribution ID: {}", v);
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "CloudFront distribution ID not set"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
+
+            let paths = match aws_config.get_cloudfront_paths() {
+                Ok(v) => {
+                    slog::info!(logger, "CloudFront invalidation paths: {:?}", v);
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "CloudFront invalidation paths not set"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
+
+            let chain = CommandChain::new(cwd).with_vars(envs.as_map());
+
+            slog::info!(logger, "Starting CloudFront invalidation");
+            executor
+                .execute_chain(chain.invalidate_chain(distribution_id, paths))
+                .await
+        }
+        "lambda_update" => {
+            let function_name = match aws_config.get_lambda_function() {
+                Ok(v) => {
+                    slog::info!(logger, "Lambda function name: {}", v);
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "Lambda function name not set"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
+
+            let publish = match aws_config.get_lambda_publish() {
+                Ok(v) => {
+                    if v {
+                        slog::info!(logger, "Lambda publish enabled");
+                    }
+                    v
+                }
+                Err(e) => {
+                    slog::error!(logger, "Failed to get Lambda publish option"; "error" => e.to_string());
+                    return Err(e.into());
+                }
+            };
+
+            let chain = CommandChain::new(cwd).with_vars(envs.as_map());
+
+            if let Ok(zip_file) = aws_config.get_lambda_zip() {
+                slog::info!(logger, "Updating Lambda with ZIP file: {:?}", zip_file);
+                executor
+                    .execute_chain(chain.lambda_update_zip_chain(function_name, zip_file, publish))
+                    .await
+            } else if let Ok(image_uri) = aws_config.get_lambda_image() {
+                slog::info!(
+                    logger,
+                    "Updating Lambda with container image: {}",
+                    image_uri
+                );
+                executor
+                    .execute_chain(chain.lambda_update_container_chain(
+                        function_name,
+                        image_uri,
+                        publish,
+                    ))
+                    .await
+            } else {
+                slog::error!(
+                    logger,
+                    "Neither ZIP file nor container image specified for Lambda update"
+                );
+                return Err("Lambda update source not specified".into());
+            }
+        }
         _ => {
             slog::error!(logger, "Unknown command: {}", cmd);
             return Err(format!("Unknown command: {}", cmd).into());

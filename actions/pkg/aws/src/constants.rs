@@ -25,6 +25,8 @@ pub const ENV_AWS_S3_FORCE: &str = "ACTION_AWS_S3_FORCE";
 pub const DEFAULT_AWS_BIN: &str = "/usr/local/bin/aws";
 pub const DEFAULT_EMPTY: &str = "";
 
+pub const DEFAULT_CLOUDFRONT_PATHS: [&str; 1] = ["/*"];
+
 lazy_static! {
     /// Configuration value for the AWS command.
     pub static ref CMD: ConfigValue<Required> =
@@ -40,12 +42,12 @@ lazy_static! {
         ConfigValue::new(PathBuf::from(DEFAULT_EMPTY), ENV_AWS_S3_DESTINATION);
 
     /// Configuration value for exclude patterns.
-    pub static ref S3_EXCLUDE: ConfigValue<String> =
-        ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_S3_EXCLUDE);
+    pub static ref S3_EXCLUDE: ConfigValue<Vec<String>> =
+        ConfigValue::new(Vec::new(), ENV_AWS_S3_EXCLUDE);
 
     /// Configuration value for include patterns.
-    pub static ref S3_INCLUDE: ConfigValue<String> =
-        ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_S3_INCLUDE);
+    pub static ref S3_INCLUDE: ConfigValue<Vec<String>> =
+        ConfigValue::new(Vec::new(), ENV_AWS_S3_INCLUDE);
 
     /// Configuration value for delete flag.
     pub static ref S3_DELETE: ConfigValue<bool> =
@@ -64,8 +66,11 @@ lazy_static! {
         ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_CLOUDFRONT_DISTRIBUTION);
 
     /// Configuration value for CloudFront invalidation paths
-    pub static ref CLOUDFRONT_PATHS: ConfigValue<String> =
-        ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_CLOUDFRONT_PATHS);
+    pub static ref CLOUDFRONT_PATHS: ConfigValue<Vec<String>> =
+    ConfigValue::new(
+        DEFAULT_CLOUDFRONT_PATHS.iter().map(|s| s.to_string()).collect(),
+        ENV_AWS_CLOUDFRONT_PATHS
+    );
 
     /// Configuration value for Lambda function name
     pub static ref LAMBDA_FUNCTION: ConfigValue<String> =

@@ -1,4 +1,4 @@
-use crate::command::AwsCommand;
+use crate::command::{AwsCommand, LambdaUpdateType};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -77,6 +77,39 @@ impl CommandChain {
 
     pub fn sync_chain(&self) -> Vec<AwsCommand> {
         vec![self.build_sync()]
+    }
+
+    pub fn invalidate_chain(&self, distribution_id: String, paths: Vec<String>) -> Vec<AwsCommand> {
+        vec![AwsCommand::CloudFrontInvalidate {
+            distribution_id,
+            paths,
+        }]
+    }
+
+    pub fn lambda_update_zip_chain(
+        &self,
+        function_name: String,
+        zip_file: PathBuf,
+        publish: bool,
+    ) -> Vec<AwsCommand> {
+        vec![AwsCommand::LambdaUpdateCode {
+            function_name,
+            update_type: LambdaUpdateType::Zip { zip_file },
+            publish,
+        }]
+    }
+
+    pub fn lambda_update_container_chain(
+        &self,
+        function_name: String,
+        image_uri: String,
+        publish: bool,
+    ) -> Vec<AwsCommand> {
+        vec![AwsCommand::LambdaUpdateCode {
+            function_name,
+            update_type: LambdaUpdateType::Container { image_uri },
+            publish,
+        }]
     }
 }
 

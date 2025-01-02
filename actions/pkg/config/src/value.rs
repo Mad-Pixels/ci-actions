@@ -173,6 +173,36 @@ impl ConfigValue<String> {
     }
 }
 
+impl ConfigValue<Vec<String>> {
+    pub fn get(&self) -> ConfigResult<Vec<String>> {
+        let val = match env::var(self.env_key) {
+            Ok(val) => {
+                if val.is_empty() {
+                    if let Some(default) = &self.default {
+                        default.clone()
+                    } else {
+                        Vec::new()
+                    }
+                } else {
+                    val.split(',').map(|s| s.trim().to_string()).collect()
+                }
+            }
+            Err(_) => {
+                if let Some(default) = &self.default {
+                    default.clone()
+                } else {
+                    return Err(ConfigError::RequiredValueMissing(self.env_key.to_string()));
+                }
+            }
+        };
+
+        for validator in &self.validators {
+            validator.validate(&val)?;
+        }
+        Ok(val)
+    }
+}
+
 impl ConfigValue<PathBuf> {
     /// Retrieves the `PathBuf` configuration value.
     ///
