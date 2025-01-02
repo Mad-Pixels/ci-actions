@@ -129,15 +129,17 @@ impl AwsCommand {
                     "--distribution-id".to_string(),
                     distribution_id.clone(),
                 ];
+                let caller_reference = format!("inv-{}", chrono::Utc::now().timestamp());
 
                 let paths_json = format!(
-                    "{{\"Paths\":{{\"Quantity\":{},\"Items\":[{}]}}}}",
+                    r#"{{"Paths":{{"Quantity":{},"Items":[{}]}},"CallerReference":"{}"}}"#,
                     paths.len(),
                     paths
                         .iter()
                         .map(|p| format!("\"{}\"", p))
                         .collect::<Vec<_>>()
-                        .join(",")
+                        .join(","),
+                    caller_reference
                 );
 
                 args.push("--invalidation-batch".to_string());

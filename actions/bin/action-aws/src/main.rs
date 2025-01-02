@@ -239,30 +239,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let chain = CommandChain::new(cwd).with_vars(envs.as_map());
 
-            if let Ok(zip_file) = aws_config.get_lambda_zip() {
-                slog::info!(logger, "Updating Lambda with ZIP file: {:?}", zip_file);
-                executor
-                    .execute_chain(chain.lambda_update_zip_chain(function_name, zip_file, publish))
-                    .await
-            } else if let Ok(image_uri) = aws_config.get_lambda_image() {
-                slog::info!(
-                    logger,
-                    "Updating Lambda with container image: {}",
-                    image_uri
-                );
-                executor
-                    .execute_chain(chain.lambda_update_container_chain(
-                        function_name,
-                        image_uri,
-                        publish,
-                    ))
-                    .await
+            if let Ok(image_uri) = aws_config.get_lambda_image() {
+                if !image_uri.is_empty() {
+                    slog::info!(
+                        logger,
+                        "Updating Lambda with container image: {}",
+                        image_uri
+                    );
+                    executor
+                        .execute_chain(chain.lambda_update_container_chain(
+                            function_name,
+                            image_uri,
+                            publish,
+                        ))
+                        .await
+                } else {
+                    if let Ok(zip_file) = aws_config.get_lambda_zip() {
+                        if zip_file.to_string_lossy() != "" {
+                            slog::info!(logger, "Updating Lambda with ZIP file: {:?}", zip_file);
+                            executor
+                                .execute_chain(chain.lambda_update_zip_chain(
+                                    function_name,
+                                    zip_file,
+                                    publish,
+                                ))
+                                .await
+                        } else {
+                            slog::error!(logger, "Neither ZIP file nor container image specified");
+                            return Err("Update source not specified".into());
+                        }
+                    } else {
+                        slog::error!(logger, "Neither ZIP file nor container image specified");
+                        return Err("Update source not specified".into());
+                    }
+                }
             } else {
-                slog::error!(
-                    logger,
-                    "Neither ZIP file nor container image specified for Lambda update"
-                );
-                return Err("Lambda update source not specified".into());
+                slog::error!(logger, "Container image URI not provided");
+                return Err("Container image URI not provided".into());
             }
         }
         _ => {
