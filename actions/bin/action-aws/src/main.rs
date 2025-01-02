@@ -253,25 +253,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             publish,
                         ))
                         .await
-                } else {
-                    if let Ok(zip_file) = aws_config.get_lambda_zip() {
-                        if zip_file.to_string_lossy() != "" {
-                            slog::info!(logger, "Updating Lambda with ZIP file: {:?}", zip_file);
-                            executor
-                                .execute_chain(chain.lambda_update_zip_chain(
-                                    function_name,
-                                    zip_file,
-                                    publish,
-                                ))
-                                .await
-                        } else {
-                            slog::error!(logger, "Neither ZIP file nor container image specified");
-                            return Err("Update source not specified".into());
-                        }
+                } else if let Ok(zip_file) = aws_config.get_lambda_zip() {
+                    if zip_file.to_string_lossy() != "" {
+                        slog::info!(logger, "Updating Lambda with ZIP file: {:?}", zip_file);
+                        executor
+                            .execute_chain(chain.lambda_update_zip_chain(
+                                function_name,
+                                zip_file,
+                                publish,
+                            ))
+                            .await
                     } else {
                         slog::error!(logger, "Neither ZIP file nor container image specified");
                         return Err("Update source not specified".into());
                     }
+                } else {
+                    slog::error!(logger, "Neither ZIP file nor container image specified");
+                    return Err("Update source not specified".into());
                 }
             } else {
                 slog::error!(logger, "Container image URI not provided");
