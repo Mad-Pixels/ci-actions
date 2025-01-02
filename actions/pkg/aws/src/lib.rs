@@ -8,7 +8,7 @@ pub mod executor;
 use std::path::PathBuf;
 
 pub use chain::CommandChain;
-pub use command::AwsCommand;
+pub use command::{AwsCommand, LambdaUpdateType};
 use config::ConfigResult;
 pub use constants::*;
 pub use environments::AwsEnv;

@@ -1,5 +1,11 @@
 use std::path::PathBuf;
 
+#[derive(Debug, Clone)]
+pub enum LambdaUpdateType {
+    Zip { zip_file: PathBuf },
+    Container { image_uri: String },
+}
+
 /// Represents the various AWS commands that can be executed.
 #[derive(Debug, Clone)]
 pub enum AwsCommand {
@@ -27,6 +33,12 @@ pub enum AwsCommand {
     CloudFrontInvalidate {
         distribution_id: String,
         paths: Vec<String>,
+    },
+
+    LambdaUpdateCode {
+        function_name: String,
+        update_type: LambdaUpdateType,
+        publish: bool,
     },
 }
 
@@ -130,6 +142,36 @@ impl AwsCommand {
 
                 args.push("--invalidation-batch".to_string());
                 args.push(paths_json);
+                args
+            }
+
+            Self::LambdaUpdateCode {
+                function_name,
+                update_type,
+                publish,
+            } => {
+                let mut args = vec![
+                    "lambda".to_string(),
+                    "update-function-code".to_string(),
+                    "--function-name".to_string(),
+                    function_name.clone(),
+                ];
+
+                match update_type {
+                    LambdaUpdateType::Zip { zip_file } => {
+                        args.push("--zip-file".to_string());
+                        args.push(format!("fileb://{}", zip_file.to_string_lossy()));
+                    }
+                    LambdaUpdateType::Container { image_uri } => {
+                        args.push("--image-uri".to_string());
+                        args.push(image_uri.clone());
+                    }
+                }
+
+                if *publish {
+                    args.push("--publish".to_string());
+                }
+
                 args
             }
         }

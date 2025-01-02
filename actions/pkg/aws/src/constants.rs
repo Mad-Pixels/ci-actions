@@ -9,6 +9,11 @@ pub const ENV_AWS_BIN: &str = "ACTION_AWS_BIN";
 pub const ENV_AWS_CLOUDFRONT_DISTRIBUTION: &str = "ACTION_AWS_CLOUDFRONT_DISTRIBUTION";
 pub const ENV_AWS_CLOUDFRONT_PATHS: &str = "ACTION_AWS_CLOUDFRONT_PATHS";
 
+pub const ENV_AWS_LAMBDA_FUNCTION: &str = "ACTION_AWS_LAMBDA_FUNCTION";
+pub const ENV_AWS_LAMBDA_ZIP: &str = "ACTION_AWS_LAMBDA_ZIP";
+pub const ENV_AWS_LAMBDA_IMAGE: &str = "ACTION_AWS_LAMBDA_IMAGE";
+pub const ENV_AWS_LAMBDA_PUBLISH: &str = "ACTION_AWS_LAMBDA_PUBLISH";
+
 pub const ENV_AWS_S3_DESTINATION: &str = "ACTION_AWS_S3_DESTINATION";
 pub const ENV_AWS_S3_EXCLUDE: &str = "ACTION_AWS_S3_EXCLUDE";
 pub const ENV_AWS_S3_INCLUDE: &str = "ACTION_AWS_S3_INCLUDE";
@@ -61,4 +66,20 @@ lazy_static! {
     /// Configuration value for CloudFront invalidation paths
     pub static ref CLOUDFRONT_PATHS: ConfigValue<String> =
         ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_CLOUDFRONT_PATHS);
+
+    /// Configuration value for Lambda function name
+    pub static ref LAMBDA_FUNCTION: ConfigValue<String> =
+        ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_LAMBDA_FUNCTION);
+
+    /// Configuration value for Lambda ZIP file path
+    pub static ref LAMBDA_ZIP: ConfigValue<PathBuf> =
+        ConfigValue::new(PathBuf::from(DEFAULT_EMPTY), ENV_AWS_LAMBDA_ZIP);
+
+    /// Configuration value for Lambda container image URI
+    pub static ref LAMBDA_IMAGE: ConfigValue<String> =
+        ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_LAMBDA_IMAGE);
+
+    /// Configuration value for Lambda publish version flag
+    pub static ref LAMBDA_PUBLISH: ConfigValue<bool> =
+        ConfigValue::new(false, ENV_AWS_LAMBDA_PUBLISH);
 }

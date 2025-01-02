@@ -1,4 +1,4 @@
-use crate::command::AwsCommand;
+use crate::command::{AwsCommand, LambdaUpdateType};
 use crate::error::{AwsError, AwsResult};
 
 use executer::{Context, Output, Subprocess, Target, Validator};
@@ -153,6 +153,7 @@ impl AwsExecutor {
                 PathBuf::from(parent)
             }
             AwsCommand::CloudFrontInvalidate { .. } => PathBuf::from("."),
+            AwsCommand::LambdaUpdateCode { .. } => PathBuf::from("."),
         };
 
         let mut cmd = vec![self.aws_path.to_string_lossy().to_string()];
@@ -253,6 +254,50 @@ impl AwsExecutor {
         self.execute(AwsCommand::CloudFrontInvalidate {
             distribution_id: distribution_id.to_string(),
             paths,
+        })
+        .await
+    }
+
+    /// Updates Lambda function code using a ZIP file.
+    ///
+    /// # Arguments
+    ///
+    /// * `function_name` - Name of the Lambda function
+    /// * `zip_file` - Path to ZIP file containing function code
+    /// * `publish` - Whether to publish a new version
+    pub async fn update_lambda_code_zip(
+        &self,
+        function_name: &str,
+        zip_file: PathBuf,
+        publish: bool,
+    ) -> AwsResult<i32> {
+        self.execute(AwsCommand::LambdaUpdateCode {
+            function_name: function_name.to_string(),
+            update_type: LambdaUpdateType::Zip { zip_file },
+            publish,
+        })
+        .await
+    }
+
+    /// Updates Lambda function code using a container image.
+    ///
+    /// # Arguments
+    ///
+    /// * `function_name` - Name of the Lambda function
+    /// * `image_uri` - URI of the container image
+    /// * `publish` - Whether to publish a new version
+    pub async fn update_lambda_code_container(
+        &self,
+        function_name: &str,
+        image_uri: &str,
+        publish: bool,
+    ) -> AwsResult<i32> {
+        self.execute(AwsCommand::LambdaUpdateCode {
+            function_name: function_name.to_string(),
+            update_type: LambdaUpdateType::Container {
+                image_uri: image_uri.to_string(),
+            },
+            publish,
         })
         .await
     }
