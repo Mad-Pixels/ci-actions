@@ -5,6 +5,10 @@ use std::path::PathBuf;
 /// ENV keys
 pub const ENV_AWS_CMD: &str = "ACTION_AWS_CMD";
 pub const ENV_AWS_BIN: &str = "ACTION_AWS_BIN";
+
+pub const ENV_AWS_CLOUDFRONT_DISTRIBUTION: &str = "ACTION_AWS_CLOUDFRONT_DISTRIBUTION";
+pub const ENV_AWS_CLOUDFRONT_PATHS: &str = "ACTION_AWS_CLOUDFRONT_PATHS";
+
 pub const ENV_AWS_S3_DESTINATION: &str = "ACTION_AWS_S3_DESTINATION";
 pub const ENV_AWS_S3_EXCLUDE: &str = "ACTION_AWS_S3_EXCLUDE";
 pub const ENV_AWS_S3_INCLUDE: &str = "ACTION_AWS_S3_INCLUDE";
@@ -49,4 +53,12 @@ lazy_static! {
     /// Configuration value for force flag.
     pub static ref S3_FORCE: ConfigValue<bool> =
         ConfigValue::new(false, ENV_AWS_S3_FORCE);
+
+    /// Configuration value for CloudFront distribution ID
+    pub static ref CLOUDFRONT_DISTRIBUTION: ConfigValue<String> =
+        ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_CLOUDFRONT_DISTRIBUTION);
+
+    /// Configuration value for CloudFront invalidation paths
+    pub static ref CLOUDFRONT_PATHS: ConfigValue<String> =
+        ConfigValue::new(DEFAULT_EMPTY.to_string(), ENV_AWS_CLOUDFRONT_PATHS);
 }

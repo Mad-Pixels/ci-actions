@@ -23,6 +23,11 @@ pub enum AwsCommand {
         dry_run: bool,
         force: bool,
     },
+
+    CloudFrontInvalidate {
+        distribution_id: String,
+        paths: Vec<String>,
+    },
 }
 
 impl AwsCommand {
@@ -99,6 +104,32 @@ impl AwsCommand {
                     args.push("--force".to_string());
                 }
 
+                args
+            }
+
+            Self::CloudFrontInvalidate {
+                distribution_id,
+                paths,
+            } => {
+                let mut args = vec![
+                    "cloudfront".to_string(),
+                    "create-invalidation".to_string(),
+                    "--distribution-id".to_string(),
+                    distribution_id.clone(),
+                ];
+
+                let paths_json = format!(
+                    "{{\"Paths\":{{\"Quantity\":{},\"Items\":[{}]}}}}",
+                    paths.len(),
+                    paths
+                        .iter()
+                        .map(|p| format!("\"{}\"", p))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                );
+
+                args.push("--invalidation-batch".to_string());
+                args.push(paths_json);
                 args
             }
         }

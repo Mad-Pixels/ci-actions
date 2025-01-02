@@ -152,6 +152,7 @@ impl AwsExecutor {
                 let parent = source.parent().unwrap_or(&default_path);
                 PathBuf::from(parent)
             }
+            AwsCommand::CloudFrontInvalidate { .. } => PathBuf::from("."),
         };
 
         let mut cmd = vec![self.aws_path.to_string_lossy().to_string()];
@@ -219,6 +220,39 @@ impl AwsExecutor {
             delete: options.delete,
             dry_run: options.dry_run,
             force: options.force,
+        })
+        .await
+    }
+
+    /// Invalidates CloudFront distribution cache for specified paths.
+    ///
+    /// # Arguments
+    ///
+    /// * `distribution_id` - CloudFront distribution ID
+    /// * `paths` - List of paths to invalidate
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use aws::executor::AwsExecutor;
+    /// # use aws::error::AwsError;
+    /// # async fn example() -> Result<(), AwsError> {
+    /// # let executor = AwsExecutor::new(/* ... */);
+    /// executor.invalidate_cache(
+    ///     "E1234567890ABCD",
+    ///     vec!["/*".to_string()]
+    /// ).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn invalidate_cache(
+        &self,
+        distribution_id: &str,
+        paths: Vec<String>,
+    ) -> AwsResult<i32> {
+        self.execute(AwsCommand::CloudFrontInvalidate {
+            distribution_id: distribution_id.to_string(),
+            paths,
         })
         .await
     }
