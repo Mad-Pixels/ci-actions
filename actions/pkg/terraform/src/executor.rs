@@ -98,6 +98,7 @@ impl TerraformExecutor {
             TerraformCommand::Plan { dir, .. } => dir,
             TerraformCommand::Apply { dir, .. } => dir,
             TerraformCommand::Workspace { dir, .. } => dir,
+            TerraformCommand::StatePull { dir, .. } => dir,
         };
 
         let mut cmd = vec![self.terraform_path.to_string_lossy().to_string()];

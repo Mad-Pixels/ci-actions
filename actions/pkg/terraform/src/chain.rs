@@ -107,4 +107,25 @@ impl CommandChain {
         commands.push(self.build_apply());
         commands
     }
+
+    fn build_state_pull(&self) -> TerraformCommand {
+        TerraformCommand::StatePull {
+            dir: self.dir.clone(),
+        }
+    }
+
+    pub fn pull_chain(&self) -> Vec<TerraformCommand> {
+        let mut commands = vec![self.build_init()];
+
+        // Для pull только выбираем workspace если он задан
+        if let Some(ws) = &self.workspace {
+            commands.push(TerraformCommand::Workspace {
+                dir: self.dir.clone(),
+                operation: WorkspaceOperation::Select(ws.clone()),
+            });
+        }
+
+        commands.push(self.build_state_pull());
+        commands
+    }
 }

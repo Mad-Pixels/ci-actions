@@ -64,6 +64,10 @@ pub enum TerraformCommand {
         dir: std::path::PathBuf,
         operation: WorkspaceOperation,
     },
+
+    StatePull {
+        dir: std::path::PathBuf,
+    },
 }
 
 impl TerraformCommand {
@@ -163,6 +167,9 @@ impl TerraformCommand {
                     }
                 }
                 args
+            }
+            Self::StatePull { dir: _ } => {
+                vec!["state".to_string(), "pull".to_string()]
             }
         }
     }

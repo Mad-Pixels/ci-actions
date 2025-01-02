@@ -131,6 +131,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let commands = match cmd.as_str().to_lowercase().as_str() {
         "plan" => chain.plan_chain(),
         "apply" => chain.apply_chain(),
+        "pull" => chain.pull_chain(),
         _ => {
             let err = format!("Unsupported command: {}", cmd);
             slog::error!(logger, "{}", err);
